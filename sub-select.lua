@@ -76,7 +76,7 @@ end
 
 --checks if the given sub matches the given track preference
 local function is_valid_sub(sub, pref)
-    if sub.lang ~= pref.slang then return false end
+    if sub.lang:find(pref.slang) then return false end
 
     local title = sub.title
 
