@@ -1,7 +1,7 @@
 [
     {
         "alang": "eng?",
-        "slang": "eng",
+        "slang": "eng?",
         "whitelist": [ "sign", "song"]
     },
     {
@@ -9,13 +9,18 @@
         "slang": "no"
     },
     {
-        "alang": "jpn?",
-        "slang": "eng",
+        "alang": "jpn",
+        "slang": "eng?",
+        "blacklist": [ "sign" ]
+    },
+    {
+        "alang": "ja",
+        "slang": "eng?",
         "blacklist": [ "sign" ]
     },
     {
         "alang": "*",
-        "slang": "eng"
+        "slang": "eng?"
     },
     {
         "alang": "*",
