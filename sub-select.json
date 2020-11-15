@@ -1,0 +1,24 @@
+[
+    {
+        "alang": "eng?",
+        "slang": "eng",
+        "whitelist": [ "sign", "song"]
+    },
+    {
+        "alang": "eng?",
+        "slang": "no"
+    },
+    {
+        "alang": "jpn?",
+        "slang": "eng",
+        "blacklist": [ "sign" ]
+    },
+    {
+        "alang": "*",
+        "slang": "eng"
+    },
+    {
+        "alang": "*",
+        "slang": "und"
+    }
+]
