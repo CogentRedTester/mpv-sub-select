@@ -43,4 +43,4 @@ Setting `alang` to `*` will match with any audio track. Setting `slang` to `no` 
 
 ## Examples
 
-The `sub_select.conf` file contains all of the options for the script and their defaults. The `sub-select.json` file contains an example set of track matches.
+The [sub_select.conf](/sub_select.conf) file contains all of the options for the script and their defaults. The [sub-select.json](/sub-select.json) file contains an example set of track matches.

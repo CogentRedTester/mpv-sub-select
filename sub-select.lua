@@ -1,3 +1,12 @@
+--[[
+    mpv-sub-select
+
+    This script allows you to configure advanced subtitle track selection based on
+    the current audio track and the names and language of the subtitle tracks.
+
+    https://github.com/CogentRedTester/mpv-sub-select
+]]--
+
 local mp = require 'mp'
 local msg = require 'mp.msg'
 local utils = require 'mp.utils'
@@ -13,6 +22,8 @@ local o = {
 
     --remove any potential prediction failures by forcibly selecting whichever
     --audio track was predicted
+    force_prediction = false,
+
     select_audio = false,
 
     --the folder that contains the 'sub-select.json' file
@@ -165,7 +176,7 @@ local function preload()
     msg.verbose("default "..alang)
 
     msg.verbose("setting audio track to " .. tostring(aid))
-    if o.select_audio then mp.set_property('file-local-options/aid', aid) end
+    if o.force_prediction then mp.set_property('file-local-options/aid', aid) end
     select_subtitles(alang)
 end
 
