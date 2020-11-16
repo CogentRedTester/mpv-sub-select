@@ -45,7 +45,7 @@ Disable the hook by setting `preload=no`. This is the simplest and most efficien
 Force the predicted track to be correct by setting `aid` to the predicted value. This can be enabled with `force_prediction=yes`. This method is not recommended, because the script's prediction algorithm is much more primitive than what is used by mpv.
 
 ### Detect Incorrect Predictions (default yes)
-Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This is the best of both worlds, since 95% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
+Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This can be disabled with `detect_incorrect_predictions=no`. This is the best of both worlds, since 95% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
 
 
 ## Examples
