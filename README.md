@@ -1,6 +1,6 @@
 # mpv-sub-select
 
-This script allows you to configure advanced subtitle track selection based on the current audio track and the names and language of the subtitle tracks.
+This script allows you to configure advanced subtitle track selection based on the current audio track and the names and language of the subtitle tracks. The script will automatically disable itself when `sid` is not set to `auto`.
 
 
 ## Configuration
@@ -33,13 +33,20 @@ The script moves down the list track preferences until any valid pair of audio a
 ### Special Strings
 Setting `alang` to `*` will match with any audio track. Setting `slang` to `no` will disable subtitles for that audio language.
 
+## Synchronous vs Asynchronous Track Selection
+The script has two different ways it can select subtitles, controlled with the `preload` script-opt. The default is to load synchronously during the preload phase, which is before track selection; this allows the script to seamlessly change the subtitles to the desired track without any indication that the tracks were switched manually. This likely has better compatability with other options and scripts.
 
-## Other Options
-### Audio Select
+The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. This is not a perfect process given my unfamiliarity with the mpv track selection algorithm, therefore in some rare situations this could result in the wrong track being selected. There are three solutions to this problem:
 
-### Active Switching
+### Use Asynchronous Mode (default no)
+Disable the hook by setting `preload=no`. This is the simplest and most efficient solution, however it means that track switching messages will printed to the console and it may break other scripts that use subtitle information.
 
-### Synchronous vs Asynchronous Track Selection
+### Force Prediction (default no)
+Force the predicted track to be correct by setting `aid` to the predicted value. This can be enabled with `force_prediction=yes`. This method is not recommended, because the script's prediction algorithm is much more primitive than what is used by mpv.
+
+### Detect Incorrect Predictions (default yes)
+Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This is the best of both worlds, since 95% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
+
 
 ## Examples
 
