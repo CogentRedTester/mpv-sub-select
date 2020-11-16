@@ -16,7 +16,7 @@ local o = {
     --selects subtitles synchronously during the preloaded hook, which has better
     --compatability with other scripts and options
     --this requires that the script predict what the default audio track will be,
-    --so theoretically this can be wrong on some rare occasions
+    --so this can be wrong on some rare occasions
     --disabling this will switch the subtitle track after playback starts
     preload = true,
 
@@ -24,7 +24,9 @@ local o = {
     --audio track was predicted
     force_prediction = false,
 
-    select_audio = false,
+    --detect when a prediction is wrong and re-check the subtitles
+    --this is automatically disabled if `force_prediction` is enabled
+    detect_incorrect_predictions = true,
 
     --the folder that contains the 'sub-select.json' file
     config = "~~/script-opts"
@@ -41,6 +43,7 @@ if prefs == nil then
     error("Invalid JSON format in sub-select.json.")
 end
 
+local latest_prediction = nil
 local alang_priority = mp.get_property_native("alang", {})
 
 --anticipates the default audio track
@@ -71,17 +74,24 @@ local function find_default_audio(track_list)
         end
     end
 
-    if priority_track then return track_list[priority_track]
-    elseif default_track then return track_list[default_track]
-    elseif first_track then return track_list[first_track]
-    else return nil end
+    --preferred langauges have priority, then the default track, then the first
+    --this will be wrong if the there are multiple tracks of the same highest priority language,
+    --and the default is not the first of these tracks.
+    --The forced flag is also not represented here
+    if priority_track then latest_prediction = track_list[priority_track]
+    elseif default_track then latest_prediction = track_list[default_track]
+    elseif first_track then latest_prediction = track_list[first_track]
+    else latest_prediction = nil end
+
+    return latest_prediction
 end
 
 --sets the subtitle track to the given sid
 --this is a function to prepare for some upcoming functionality, but I've forgotten what that is
-local function set_sub_track(sid)
-    msg.verbose("setting sub track to " .. sid)
-    mp.set_property('file-local-options/sid', sid)
+local function set_track(type, id)
+    msg.verbose("setting "..type.." to " .. id)
+    if mp.get_property_number(type) == id then return end
+    mp.set_property('file-local-options/'..type, id)
 end
 
 --checks if the given audio matches the given track preference
@@ -141,14 +151,15 @@ local function select_subtitles(audio)
         if is_valid_audio(alang, pref) then
             --special handling when we want to disable subtitles
             if pref.slang == "no" then
-                mp.set_property_number('file-local-options/sid', 0)
+                set_track("sid", "no")
                 return
             end
 
             --checks if any of the subtitle tracks match the preset for the current audio
             for i = 1, #subs do
+                if not subs[i].lang then subs[i].lang = "und" end
                 if is_valid_sub(subs[i], pref) then
-                    set_sub_track(subs[i].id)
+                    set_track("sid", subs[i].id)
                     return
                 end
             end
@@ -187,7 +198,7 @@ local function preload()
 
     msg.verbose("predicted audio track is "..audio.id)
 
-    if o.force_prediction then mp.set_property('file-local-options/aid', audio.id) end
+    if o.force_prediction then set_track("aid", audio.id) end
     select_subtitles(audio)
 end
 
@@ -196,6 +207,15 @@ if o.preload then
     mp.add_hook('on_preloaded', 30, function()
         if mp.get_property("options/sid", "auto") == "auto" then preload() end
     end)
+
+    --double check if the predicted subtitle was correct
+    if o.detect_incorrect_predictions and not o.force_prediction then
+        mp.register_event("file-loaded", function()
+            if latest_prediction.id ~= mp.get_property_number("aid", 0) then
+                async_load()
+            end
+        end)
+    end
 else
     mp.register_event("file-loaded", function()
         if mp.get_property("options/sid", "auto") == "auto" then async_load() end
