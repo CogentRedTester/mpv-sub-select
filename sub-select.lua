@@ -48,43 +48,41 @@ end
 
 local latest_audio = {}
 local alang_priority = mp.get_property_native("alang", {})
+local audio_tracks = {}
+local sub_tracks = {}
 
 --anticipates the default audio track
 --returns the node for the predicted track
 --this whole function can be skipped if the user decides to load the subtitles asynchronously instead,
 --or if `--aid` is not set to `auto`
 local function find_default_audio()
-    local track_list = mp.get_property_native("track-list", {})
-
     local highest_priority = {}
     local priority_str = ""
     local num_prefs = #alang_priority
-    local num_tracks = #track_list
+    local num_tracks = #audio_tracks
 
     --loop through the track list for any audio tracks
-    for i = 1, #track_list do
-        if track_list[i].type == "audio" then
-            local track = track_list[i]
+    for i = 1, #audio_tracks do
+        local track = audio_tracks[i]
 
-            --loop through the alang list to check if it has a preference
-            local pref = 0
-            for j = 1, #alang_priority do
-                if track.lang == alang_priority[j] then
+        --loop through the alang list to check if it has a preference
+        local pref = 0
+        for j = 1, #alang_priority do
+            if track.lang == alang_priority[j] then
 
-                    --a lower number j has higher priority, so flip the numbers around so the lowest j has highest preference
-                    pref = num_prefs - j
-                    break
-                end
+                --a lower number j has higher priority, so flip the numbers around so the lowest j has highest preference
+                pref = num_prefs - j
+                break
             end
+        end
 
-            --format the important preferences so that we can easily use a lexicographical comparison to find the default
-            local formatted_str = string.format("%s-%04d-%s-%d", tostring(track.forced), pref, tostring(track.default), num_tracks - track.id)
-            msg.trace("formatted track info: " .. formatted_str)
+        --format the important preferences so that we can easily use a lexicographical comparison to find the default
+        local formatted_str = string.format("%s-%04d-%s-%d", tostring(track.forced), pref, tostring(track.default), num_tracks - track.id)
+        msg.trace("formatted track info: " .. formatted_str)
 
-            if formatted_str > priority_str then
-                priority_str = formatted_str
-                highest_priority = track
-            end
+        if formatted_str > priority_str then
+            priority_str = formatted_str
+            highest_priority = track
         end
     end
 
@@ -146,16 +144,6 @@ end
 
 --scans the track list and selects subtitle tracks which match the track preferences
 local function select_subtitles(alang)
-    local subs = {}
-    local track_list = mp.get_property_native("track-list", {})
-
-    --creating a table of just the subtitles
-    for i = 1, #track_list do
-        if track_list[i].type == "sub" then
-            table.insert(subs, track_list[i])
-        end
-    end
-
     --searching the selection presets for one that applies to this track
     for _,pref in ipairs(prefs) do
         msg.trace("testing pref: " .. utils.to_string(pref))
@@ -167,10 +155,10 @@ local function select_subtitles(alang)
             end
 
             --checks if any of the subtitle tracks match the preset for the current audio
-            for i = 1, #subs do
-                if not subs[i].lang then subs[i].lang = "und" end
-                if is_valid_sub(subs[i], pref) then
-                    set_track("sid", subs[i].id)
+            for i = 1, #sub_tracks do
+                if not sub_tracks[i].lang then sub_tracks[i].lang = "und" end
+                if is_valid_sub(sub_tracks[i], pref) then
+                    set_track("sid", sub_tracks[i].id)
                     return
                 end
             end
@@ -187,26 +175,10 @@ local function process_audio(audio)
     select_subtitles(alang)
 end
 
---find the current audio track node by id
-local function find_audio_by_id(id)
-    local track_list = mp.get_property_native("track-list", {})
-    for i = 1, #track_list do
-        if id == track_list[i].id and track_list[i].type == "audio" then
-            return track_list[i]
-        end
-    end
-    return {}
-end
-
 --returns the audio node for the currently playing audio track
 local function find_current_audio()
-    local track_list = mp.get_property_native("track-list", {})
-    for i = 1, #track_list do
-        if track_list[i].selected and track_list[i].type == "audio" then
-            return track_list[i]
-        end
-    end
-    return {}
+    local aid = mp.get_property_number("aid", 0)
+    return audio_tracks[aid] or {}
 end
 
 --select subtitles asynchronously after playback start
@@ -222,27 +194,34 @@ local function preload()
         process_audio( {} )
         return
     elseif opt ~= "auto" then
-            process_audio( find_audio_by_id( tonumber(opt) ) )
+        process_audio( audio_tracks[tonumber(opt)] )
         return
     end
 
     local audio = find_default_audio()
+    msg.verbose("predicted audio track is "..tostring(audio.id))
 
     if next(audio) then
-        msg.verbose("predicted audio track is "..audio.id)
         if o.force_prediction then set_track("aid", audio.id) end
     end
     process_audio(audio)
 end
 
-local DISABLE_SCRIPT = true
-mp.observe_property("track-auto-selection", "bool", function(_,b) DISABLE_SCRIPT = not b end)
+local track_auto_selection = true
+mp.observe_property("track-auto-selection", "bool", function(_,b) track_auto_selection = b end)
+
+local function continue_script()
+    if not track_auto_selection then return false end
+    if #sub_tracks < 1 then return false end
+    return true
+end
 
 --reselect the subtitles if the audio is different from what was last used
 local function reselect_subtitles()
-    if DISABLE_SCRIPT then return end
-    if latest_audio.id ~= mp.get_property_number("aid", 0) then
-        local audio = find_current_audio()
+    if not continue_script() then return end
+    local aid = mp.get_property_number("aid", 0)
+    if latest_audio.id ~= aid then
+        local audio = audio_tracks[aid] or {}
         if audio.lang ~= latest_audio.lang then
             msg.info("detected audio change - reselecting subtitles")
             process_audio(audio)
@@ -250,10 +229,28 @@ local function reselect_subtitles()
     end
 end
 
+--setups the audio and subtitle track lists to use for the rest of the script
+local function read_track_list()
+    local track_list = mp.get_property_native("track-list", {})
+    audio_tracks = {}
+    sub_tracks = {}
+    for _,track in ipairs(track_list) do
+        if track.type == "audio" then
+            table.insert(audio_tracks, track)
+        elseif track.type == "sub" then
+            table.insert(sub_tracks, track)
+        end
+    end
+end
+
+--setup the audio and subtitle track lists when a new file is loaded
+mp.add_hook('on_preloaded', 25, read_track_list)
+
 --events for file loading
 if o.preload then
     mp.add_hook('on_preloaded', 30, function()
-        if mp.get_property("options/sid", "auto") == "auto" and not DISABLE_SCRIPT then preload()
+        if not continue_script() then return end
+        if mp.get_property("options/sid", "auto") == "auto" then preload()
         elseif o.observe_audio_switches then latest_audio = find_default_audio() end
     end)
 
@@ -263,7 +260,8 @@ if o.preload then
     end
 else
     mp.register_event("file-loaded", function()
-        if mp.get_property("options/sid", "auto") == "auto" and not DISABLE_SCRIPT then async_load()
+        if not continue_script() then return end
+        if mp.get_property("options/sid", "auto") == "auto" then async_load()
         elseif o.observe_audio_switches then latest_audio = find_current_audio() end
     end)
 end
@@ -276,4 +274,7 @@ if o.observe_audio_switches then
 end
 
 --force subtitle selection during playback
-mp.register_script_message("select-subtitles", async_load)
+mp.register_script_message("select-subtitles", function()
+    read_track_list()
+    async_load()
+end)
