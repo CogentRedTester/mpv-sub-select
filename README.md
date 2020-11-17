@@ -31,8 +31,21 @@ All matching is done using the lua `string.find` function, so supports [patterns
 The script moves down the list track preferences until any valid pair of audio and subtitle tracks are found. Once this happens the script immediately sets the subtitle track and terminates. If none of the tracks match then trak selection is deferred to mpv.
 
 ### Special Strings
-Setting `alang` to `*` will match with any audio track. Setting `slang` or `alang` to `no` will match with disabled audio/subtitles.
+There are a number of strings that can be used for the `alang` and `slang` which have special behaviour:
 
+**alang:**
+| String 	| Action                                  	|
+|--------	|-----------------------------------------	|
+| *      	| matches any language                    	|
+| no     	| matches when no audio track is selected 	|
+|        	|                                         	|
+
+**slang:**
+| String  	| Action                                        	|
+|---------	|-----------------------------------------------	|
+| no      	| disables subs if `slang` matches                	|
+| default 	| enables subtitles with the `default` tag       	|
+| forced  	| enables subtitles with the `forced` tag       	|
 
 ## Auto-Switch Mode
 The `detect_audio_switches` script-opt allows one to enable Auto-Switch Mode. In this mode the script will automatically reselect the subtitles when the script detects that the audio language has changed.

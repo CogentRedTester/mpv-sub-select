@@ -1,5 +1,9 @@
 [
     {
+        "alang": "*",
+        "slang": "forced"
+    },
+    {
         "alang": "j[ap]n?",
         "slang": "eng?",
         "blacklist": [ "sign" ]

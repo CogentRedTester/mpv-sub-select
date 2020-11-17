@@ -110,7 +110,13 @@ end
 
 --checks if the given sub matches the given track preference
 local function is_valid_sub(sub, pref)
-    if not sub.lang:find(pref.slang) then return false end
+    if pref.slang == "default" then
+        if not sub.default then return false end
+    elseif pref.slang == "forced" then
+        if not sub.forced then return false end
+    elseif not sub.lang:find(pref.slang) then
+        return false end
+
     local title = sub.title
 
     --whitelist/blacklist handling
@@ -152,11 +158,11 @@ local function select_subtitles(alang)
 
     --searching the selection presets for one that applies to this track
     for _,pref in ipairs(prefs) do
+        msg.trace("testing pref: " .. utils.to_string(pref))
         if is_valid_audio(alang, pref) then
             --special handling when we want to disable subtitles
             if pref.slang == "no" then
                 set_track("sid", "no")
-                msg.trace(utils.to_string(pref))
                 return
             end
 
@@ -165,7 +171,6 @@ local function select_subtitles(alang)
                 if not subs[i].lang then subs[i].lang = "und" end
                 if is_valid_sub(subs[i], pref) then
                     set_track("sid", subs[i].id)
-                    msg.trace(utils.to_string(pref))
                     return
                 end
             end
