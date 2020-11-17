@@ -156,6 +156,7 @@ local function select_subtitles(alang)
             --special handling when we want to disable subtitles
             if pref.slang == "no" then
                 set_track("sid", "no")
+                msg.trace(utils.to_string(pref))
                 return
             end
 
@@ -164,6 +165,7 @@ local function select_subtitles(alang)
                 if not subs[i].lang then subs[i].lang = "und" end
                 if is_valid_sub(subs[i], pref) then
                     set_track("sid", subs[i].id)
+                    msg.trace(utils.to_string(pref))
                     return
                 end
             end
@@ -209,10 +211,13 @@ end
 
 --select subtitles synchronously during the on_preloaded hook
 local function preload()
-    local opt = mp.get_property_number("options/aid", -1)
+    local opt = mp.get_property("options/aid", "auto")
 
-    if opt ~= -1 then
-            process_audio( find_audio_by_id(opt) )
+    if opt == "no" then
+        process_audio( {} )
+        return
+    elseif opt ~= "auto" then
+            process_audio( find_audio_by_id( tonumber(opt) ) )
         return
     end
 
@@ -259,7 +264,9 @@ end
 
 --reselect subs when changing audio tracks
 if o.observe_audio_switches then
-    mp.observe_property("aid", "number", reselect_subtitles)
+    mp.observe_property("aid", "string", function(_,aid)
+        if aid ~= "auto" then reselect_subtitles() end
+    end)
 end
 
 --force subtitle selection during playback
