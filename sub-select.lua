@@ -56,7 +56,7 @@ local alang_priority = mp.get_property_native("alang", {})
 local function find_default_audio()
     local track_list = mp.get_property_native("track-list", {})
 
-    local highest_priority = nil
+    local highest_priority = {}
     local priority_str = ""
     local num_prefs = #alang_priority
     local num_tracks = #track_list
@@ -228,9 +228,10 @@ local function preload()
 
     local audio = find_default_audio()
 
-    msg.verbose("predicted audio track is "..audio.id)
-
-    if o.force_prediction then set_track("aid", audio.id) end
+    if next(audio) then
+        msg.verbose("predicted audio track is "..audio.id)
+        if o.force_prediction then set_track("aid", audio.id) end
+    end
     process_audio(audio)
 end
 
