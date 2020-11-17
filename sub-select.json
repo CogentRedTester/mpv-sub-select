@@ -1,11 +1,6 @@
 [
     {
-        "alang": "jpn",
-        "slang": "eng?",
-        "blacklist": [ "sign" ]
-    },
-    {
-        "alang": "ja",
+        "alang": "j[ap]n?",
         "slang": "eng?",
         "blacklist": [ "sign" ]
     },
@@ -16,6 +11,10 @@
     },
     {
         "alang": "eng?",
+        "slang": "no"
+    },
+    {
+        "alang": "no",
         "slang": "no"
     },
     {
