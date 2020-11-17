@@ -33,22 +33,25 @@ The script moves down the list track preferences until any valid pair of audio a
 ### Special Strings
 Setting `alang` to `*` will match with any audio track. Setting `slang` or `alang` to `no` will match with disabled audio/subtitles.
 
+
 ## Auto-Select Mode
-The `detect_audio_switches` script-opt allows one to enable Auto-Select Mode. In this mode the script will automatically reselect the subtitles when the script detects that the audio language has changed. This setting ignores `--sid=auto` by necessity, but when using synchronous mode the script will not change the original `sid` until the first audio switch. This feature still respects `--track-auto-selection` .
+The `detect_audio_switches` script-opt allows one to enable Auto-Select Mode. In this mode the script will automatically reselect the subtitles when the script detects that the audio language has changed.
+This setting ignores `--sid=auto` by necessity, but when using synchronous mode the script will not change the original `sid` until the first audio switch. This feature still respects `--track-auto-selection` .
+
 
 ## Synchronous vs Asynchronous Track Selection
 The script has two different ways it can select subtitles, controlled with the `preload` script-opt. The default is to load synchronously during the preload phase, which is before track selection; this allows the script to seamlessly change the subtitles to the desired track without any indication that the tracks were switched manually. This likely has better compatability with other options and scripts.
 
-The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. This is not a perfect process given my unfamiliarity with the mpv track selection algorithm, therefore in some rare situations this could result in the wrong track being selected. There are three solutions to this problem:
+The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. Therefore in some rare situations this could result in the wrong track being selected. There are three solutions to this problem:
 
 ### Use Asynchronous Mode (default no)
-Disable the hook by setting `preload=no`. This is the simplest and most efficient solution, however it means that track switching messages will printed to the console and it may break other scripts that use subtitle information.
+Disable the hook by setting `preload=no`. This is the simplest and most efficient solution, however it means that track switching messages will be printed to the console and it may break other scripts that use subtitle information.
 
 ### Force Prediction (default no)
-Force the predicted track to be correct by setting `aid` to the predicted value. This can be enabled with `force_prediction=yes`. This method is not recommended, because the script's prediction algorithm is much more primitive than what is used by mpv.
+Force the predicted track to be correct by setting `aid` to the predicted value. This can be enabled with `force_prediction=yes`. This method is not ideal if you want to use mpv's more refined track selection, but should suffice for 99% of cases.
 
 ### Detect Incorrect Predictions (default yes)
-Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This can be disabled with `detect_incorrect_predictions=no`. This is the best of both worlds, since 95% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
+Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This can be disabled with `detect_incorrect_predictions=no`. This is the best of both worlds, since 99% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
 
 Auto-Select Mode enables this automatically.
 

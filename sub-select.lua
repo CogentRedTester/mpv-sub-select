@@ -51,44 +51,44 @@ local alang_priority = mp.get_property_native("alang", {})
 
 --anticipates the default audio track
 --returns the node for the predicted track
---this whole function can be skipped if the user decides to load the subtitles asynchronously instead
+--this whole function can be skipped if the user decides to load the subtitles asynchronously instead,
+--or if `--aid` is not set to `auto`
 local function find_default_audio()
     local track_list = mp.get_property_native("track-list", {})
 
-    local highest_priority = math.huge
-    local default_track = nil
-    local priority_track = nil
-    local first_track = nil
+    local highest_priority = nil
+    local priority_str = ""
+    local num_prefs = #alang_priority
+    local num_tracks = #track_list
 
     --loop through the track list for any audio tracks
     for i = 1, #track_list do
         if track_list[i].type == "audio" then
-            if first_track == nil then first_track = i end
-            if track_list[i].default and default_track == nil then default_track = i end
+            local track = track_list[i]
 
             --loop through the alang list to check if it has a preference
+            local pref = 0
             for j = 1, #alang_priority do
-                if track_list[i].lang == alang_priority[j] then
-                    if (j < highest_priority) then
-                        highest_priority = j
-                        priority_track = i
-                    end
+                if track.lang == alang_priority[j] then
+
+                    --a lower number j has higher priority, so flip the numbers around so the lowest j has highest preference
+                    pref = num_prefs - j
                     break
                 end
+            end
+
+            --format the important preferences so that we can easily use a lexicographical comparison to find the default
+            local formatted_str = string.format("%s-%04d-%s-%d", tostring(track.forced), pref, tostring(track.default), num_tracks - track.id)
+            msg.trace("formatted track info: " .. formatted_str)
+
+            if formatted_str > priority_str then
+                priority_str = formatted_str
+                highest_priority = track
             end
         end
     end
 
-    --preferred langauges have priority, then the default track, then the first
-    --this will be wrong if the there are multiple tracks of the same highest priority language,
-    --and the default is not the first of these tracks.
-    --The forced flag is also not represented here
-    if priority_track then latest_prediction = track_list[priority_track]
-    elseif default_track then latest_prediction = track_list[default_track]
-    elseif first_track then latest_prediction = track_list[first_track]
-    else latest_prediction = nil end
-
-    return latest_prediction
+    return highest_priority
 end
 
 --sets the subtitle track to the given sid
