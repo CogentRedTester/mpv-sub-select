@@ -33,8 +33,8 @@ The script moves down the list track preferences until any valid pair of audio a
 ### Special Strings
 Setting `alang` to `*` will match with any audio track. Setting `slang` or `alang` to `no` will match with disabled audio/subtitles.
 
-## Auto-Select Mode
-The `detect_audio_switches` script-opt allows one to enable Auto-Select Mode. In this mode the script will automatically reselect the subtitles when the script detects that the audio language has changed. This setting ignores `--sid=auto` by necessity, but when using synchronous mode the script will not change the original `sid` until the first audio switch. This feature still respects `--track-auto-selection` .
+## Auto-Switch Mode
+The `detect_audio_switches` script-opt allows one to enable Auto-Switch Mode. In this mode the script will automatically reselect the subtitles when the script detects that the audio language has changed. This setting ignores `--sid=auto` by necessity, but when using synchronous mode the script will not change the original `sid` until the first audio switch. This feature still respects `--track-auto-selection` .
 
 ## Synchronous vs Asynchronous Track Selection
 The script has two different ways it can select subtitles, controlled with the `preload` script-opt. The default is to load synchronously during the preload phase, which is before track selection; this allows the script to seamlessly change the subtitles to the desired track without any indication that the tracks were switched manually. This likely has better compatability with other options and scripts.
