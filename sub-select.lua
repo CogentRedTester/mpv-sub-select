@@ -77,7 +77,7 @@ local function find_default_audio()
         end
 
         --format the important preferences so that we can easily use a lexicographical comparison to find the default
-        local formatted_str = string.format("%s-%04d-%s-%d", tostring(track.forced), pref, tostring(track.default), num_tracks - track.id)
+        local formatted_str = string.format("%s-%04d-%s-%02d", tostring(track.forced), pref, tostring(track.default), num_tracks - track.id)
         msg.trace("formatted track info: " .. formatted_str)
 
         if formatted_str > priority_str then
