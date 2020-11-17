@@ -28,6 +28,9 @@ local o = {
     --this is automatically disabled if `force_prediction` is enabled
     detect_incorrect_predictions = true,
 
+    --observe audio switches and reselect the subtitles when alang changes
+    observe_audio_switches = false,
+
     --the folder that contains the 'sub-select.json' file
     config = "~~/script-opts"
 }
@@ -43,13 +46,15 @@ if prefs == nil then
     error("Invalid JSON format in sub-select.json.")
 end
 
-local latest_prediction = nil
+local latest_audio = {}
 local alang_priority = mp.get_property_native("alang", {})
 
 --anticipates the default audio track
 --returns the node for the predicted track
 --this whole function can be skipped if the user decides to load the subtitles asynchronously instead
-local function find_default_audio(track_list)
+local function find_default_audio()
+    local track_list = mp.get_property_native("track-list", {})
+
     local highest_priority = math.huge
     local default_track = nil
     local priority_track = nil
@@ -97,6 +102,7 @@ end
 --checks if the given audio matches the given track preference
 local function is_valid_audio(alang, pref)
     if pref.alang == '*' then return true end
+    if alang == nil then return (pref.alang == "no") end
 
     if alang:find(pref.alang) then return true end
     return false
@@ -133,9 +139,7 @@ local function is_valid_sub(sub, pref)
 end
 
 --scans the track list and selects subtitle tracks which match the track preferences
-local function select_subtitles(audio)
-    local alang = audio.lang
-    if not alang then alang = "und" end
+local function select_subtitles(alang)
     local subs = {}
     local track_list = mp.get_property_native("track-list", {})
 
@@ -167,59 +171,95 @@ local function select_subtitles(audio)
     end
 end
 
---select subtitles asynchronously after playback start
-local function async_load()
+--extract the language code from an audio track node and pass it to select_subtitles
+local function process_audio(audio)
+    latest_audio = audio
+    local alang = audio.lang
+    if not next(audio) then alang = nil
+    elseif not alang then alang = "und" end
+    select_subtitles(alang)
+end
+
+--find the current audio track node by id
+local function find_audio_by_id(id)
+    local track_list = mp.get_property_native("track-list", {})
+    for i = 1, #track_list do
+        if id == track_list[i].id and track_list[i].type == "audio" then
+            return track_list[i]
+        end
+    end
+    return {}
+end
+
+--returns the audio node for the currently playing audio track
+local function find_current_audio()
     local track_list = mp.get_property_native("track-list", {})
     for i = 1, #track_list do
         if track_list[i].selected and track_list[i].type == "audio" then
-            select_subtitles(track_list[i])
-            return
+            return track_list[i]
         end
     end
+    return {}
+end
+
+--select subtitles asynchronously after playback start
+local function async_load()
+    process_audio( find_current_audio() )
 end
 
 --select subtitles synchronously during the on_preloaded hook
 local function preload()
-    local track_list = mp.get_property_native("track-list", {})
     local opt = mp.get_property_number("options/aid", -1)
 
     if opt ~= -1 then
-        for i = 1, #track_list do
-            if track_list[i].type == "audio" and track_list[i].id == opt then
-                select_subtitles(track_list[i])
-                return
-            end
-        end
+            process_audio( find_audio_by_id(opt) )
         return
     end
 
-    local audio = find_default_audio(track_list)
-    if not audio then return end
+    local audio = find_default_audio()
 
     msg.verbose("predicted audio track is "..audio.id)
 
     if o.force_prediction then set_track("aid", audio.id) end
-    select_subtitles(audio)
+    process_audio(audio)
+end
+
+local DISABLE_SCRIPT = true
+mp.observe_property("track-auto-selection", "bool", function(_,b) DISABLE_SCRIPT = not b end)
+
+--reselect the subtitles if the audio is different from what was last used
+local function reselect_subtitles()
+    if DISABLE_SCRIPT then return end
+    if latest_audio.id ~= mp.get_property_number("aid", 0) then
+        local audio = find_current_audio()
+        if audio.lang ~= latest_audio.lang then
+            msg.info("detected audio change - reselecting subtitles")
+            process_audio(audio)
+        end
+    end
 end
 
 --events for file loading
 if o.preload then
     mp.add_hook('on_preloaded', 30, function()
-        if mp.get_property("options/sid", "auto") == "auto" then preload() end
+        if mp.get_property("options/sid", "auto") == "auto" and not DISABLE_SCRIPT then preload()
+        elseif o.observe_audio_switches then latest_audio = find_default_audio() end
     end)
 
     --double check if the predicted subtitle was correct
-    if o.detect_incorrect_predictions and not o.force_prediction then
-        mp.register_event("file-loaded", function()
-            if latest_prediction.id ~= mp.get_property_number("aid", 0) then
-                async_load()
-            end
-        end)
+    if o.detect_incorrect_predictions and not o.force_prediction and not o.observe_audio_switches then
+        mp.register_event("file-loaded", reselect_subtitles)
     end
 else
     mp.register_event("file-loaded", function()
-        if mp.get_property("options/sid", "auto") == "auto" then async_load() end
+        if mp.get_property("options/sid", "auto") == "auto" and not DISABLE_SCRIPT then async_load()
+        elseif o.observe_audio_switches then latest_audio = find_current_audio() end
     end)
+end
+
+--reselect subs when changing audio tracks
+if o.observe_audio_switches then
+    mp.observe_property("aid", "number", reselect_subtitles)
 end
 
 --force subtitle selection during playback

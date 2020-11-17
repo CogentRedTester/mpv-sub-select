@@ -1,6 +1,6 @@
 # mpv-sub-select
 
-This script allows you to configure advanced subtitle track selection based on the current audio track and the names and language of the subtitle tracks. The script will automatically disable itself when `sid` is not set to `auto`.
+This script allows you to configure advanced subtitle track selection based on the current audio track and the names and language of the subtitle tracks. The script will automatically disable itself when `--sid` is not set to `auto`, or when `--track-auto-selection` is disabled.
 
 
 ## Configuration
@@ -31,7 +31,10 @@ All matching is done using the lua `string.find` function, so supports [patterns
 The script moves down the list track preferences until any valid pair of audio and subtitle tracks are found. Once this happens the script immediately sets the subtitle track and terminates. If none of the tracks match then trak selection is deferred to mpv.
 
 ### Special Strings
-Setting `alang` to `*` will match with any audio track. Setting `slang` to `no` will disable subtitles for that audio language.
+Setting `alang` to `*` will match with any audio track. Setting `slang` or `alang` to `no` will match with disabled audio/subtitles.
+
+## Auto-Select Mode
+The `detect_audio_switches` script-opt allows one to enable Auto-Select Mode. In this mode the script will automatically reselect the subtitles when the script detects that the audio language has changed. This setting ignores `--sid=auto` by necessity, but when using synchronous mode the script will not change the original `sid` until the first audio switch. This feature still respects `--track-auto-selection` .
 
 ## Synchronous vs Asynchronous Track Selection
 The script has two different ways it can select subtitles, controlled with the `preload` script-opt. The default is to load synchronously during the preload phase, which is before track selection; this allows the script to seamlessly change the subtitles to the desired track without any indication that the tracks were switched manually. This likely has better compatability with other options and scripts.
@@ -46,6 +49,8 @@ Force the predicted track to be correct by setting `aid` to the predicted value.
 
 ### Detect Incorrect Predictions (default yes)
 Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This can be disabled with `detect_incorrect_predictions=no`. This is the best of both worlds, since 95% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
+
+Auto-Select Mode enables this automatically.
 
 
 ## Examples
