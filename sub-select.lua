@@ -62,12 +62,12 @@ local function find_default_audio()
     local num_tracks = #audio_tracks
 
     --loop through the track list for any audio tracks
-    for i = 1, #audio_tracks do
+    for i = 1, num_tracks do
         local track = audio_tracks[i]
 
         --loop through the alang list to check if it has a preference
         local pref = 0
-        for j = 1, #alang_priority do
+        for j = 1, num_prefs do
             if track.lang == alang_priority[j] then
 
                 --a lower number j has higher priority, so flip the numbers around so the lowest j has highest preference
