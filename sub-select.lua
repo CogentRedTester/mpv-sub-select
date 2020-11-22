@@ -13,6 +13,10 @@ local utils = require 'mp.utils'
 local opt = require 'mp.options'
 
 local o = {
+    --enables/disables the script
+    --this option can be modifed at runtime to freeze the current track selection
+    enabled = true,
+
     --selects subtitles synchronously during the preloaded hook, which has better
     --compatability with other scripts and options
     --this requires that the script predict what the default audio track will be,
@@ -35,7 +39,7 @@ local o = {
     config = "~~/script-opts"
 }
 
-opt.read_options(o, "sub_select")
+opt.read_options(o, "sub_select", function() end)
 
 local file = assert(io.open(mp.command_native({"expand-path", o.config}) .. "/sub-select.json"))
 local json = file:read("*all")
@@ -211,6 +215,7 @@ local track_auto_selection = true
 mp.observe_property("track-auto-selection", "bool", function(_,b) track_auto_selection = b end)
 
 local function continue_script()
+    if not o.enabled then return false end
     if not track_auto_selection then return false end
     if #sub_tracks < 1 then return false end
     return true
