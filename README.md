@@ -1,7 +1,15 @@
 # mpv-sub-select
 
-This script allows you to configure advanced subtitle track selection based on the current audio track and the names and language of the subtitle tracks. The script will automatically disable itself when `--sid` is not set to `auto`, or when `--track-auto-selection` is disabled.
+This script allows you to configure advanced subtitle track selection based on the current audio track and the names and language of the subtitle tracks. The script will automatically disable itself when mpv is started with `--sid` not set to `auto`, or when `--track-auto-selection` is disabled.
 
+## Commands
+The script supports two commands to contrl subtitle selection.
+
+### `script-message select-subtitles`
+This command will force subtitle selection during runtime based on the current audio track.
+
+### `script-message sub-select [arg]`
+This command will enable/disable the script. Valid arguments are `enable`, `disable`, and `toggle`. If the script is enabled then the current subtitle track will be reselected.
 
 ## Configuration
 

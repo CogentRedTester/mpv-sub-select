@@ -13,9 +13,8 @@ local utils = require 'mp.utils'
 local opt = require 'mp.options'
 
 local o = {
-    --enables/disables the script
-    --this option can be modifed at runtime to freeze the current track selection
-    enabled = true,
+    --forcibly enable the script regardless of the sid option
+    force_enable = false,
 
     --selects subtitles synchronously during the preloaded hook, which has better
     --compatability with other scripts and options
@@ -39,7 +38,7 @@ local o = {
     config = "~~/script-opts"
 }
 
-opt.read_options(o, "sub_select", function() end)
+opt.read_options(o, "sub_select")
 
 local file = assert(io.open(mp.command_native({"expand-path", o.config}) .. "/sub-select.json"))
 local json = file:read("*all")
@@ -50,6 +49,7 @@ if prefs == nil then
     error("Invalid JSON format in sub-select.json.")
 end
 
+local ENABLED = o.force_enable or mp.get_property("options/sid", "auto") == "auto"
 local latest_audio = {}
 local alang_priority = mp.get_property_native("alang", {})
 local audio_tracks = {}
@@ -98,7 +98,7 @@ end
 local function set_track(type, id)
     msg.verbose("setting "..type.." to " .. id)
     if mp.get_property_number(type) == id then return end
-    mp.set_property('file-local-options/'..type, id)
+    mp.set_property(type, id)
 end
 
 --checks if the given audio matches the given track preference
@@ -215,9 +215,9 @@ local track_auto_selection = true
 mp.observe_property("track-auto-selection", "bool", function(_,b) track_auto_selection = b end)
 
 local function continue_script()
-    if not o.enabled then return false end
-    if not track_auto_selection then return false end
     if #sub_tracks < 1 then return false end
+    if not ENABLED then return false end
+    if not track_auto_selection then return false end
     return true
 end
 
@@ -255,8 +255,8 @@ mp.add_hook('on_preloaded', 25, read_track_list)
 if o.preload then
     mp.add_hook('on_preloaded', 30, function()
         if not continue_script() then return end
-        if mp.get_property("options/sid", "auto") == "auto" then preload()
-        elseif o.observe_audio_switches then latest_audio = find_default_audio() end
+        preload()
+        if o.observe_audio_switches then latest_audio = find_default_audio() end
     end)
 
     --double check if the predicted subtitle was correct
@@ -266,8 +266,8 @@ if o.preload then
 else
     mp.register_event("file-loaded", function()
         if not continue_script() then return end
-        if mp.get_property("options/sid", "auto") == "auto" then async_load()
-        elseif o.observe_audio_switches then latest_audio = find_current_audio() end
+        async_load()
+        if o.observe_audio_switches then latest_audio = find_current_audio() end
     end)
 end
 
@@ -279,7 +279,18 @@ if o.observe_audio_switches then
 end
 
 --force subtitle selection during playback
-mp.register_script_message("select-subtitles", function()
-    read_track_list()
+mp.register_script_message("select-subtitles", async_load)
+
+--toggle sub-select during playback
+mp.register_script_message("sub-select", function(arg)
+    if arg == "toggle" then ENABLED = not ENABLED
+    elseif arg == "enable" then ENABLED = true
+    elseif arg == "disable" then ENABLED = false end
+    local str = "sub-select: ".. (ENABLED and "enabled" or "disabled")
+    mp.osd_message(str)
+
+    if not continue_script() then return end
     async_load()
+    if o.observe_audio_switches then latest_audio = find_current_audio() end
 end)
+
