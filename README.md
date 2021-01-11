@@ -9,7 +9,7 @@ The script supports two commands to contrl subtitle selection.
 This command will force subtitle selection during runtime based on the current audio track.
 
 ### `script-message sub-select [arg]`
-This command will enable/disable the script. Valid arguments are `enable`, `disable`, and `toggle`. If the script is enabled then the current subtitle track will be reselected.
+This command will enable/disable the script. Valid arguments are `enable`, `disable`, and `toggle`. If the script gets enabled then the current subtitle track will be reselected.
 
 ## Configuration
 
@@ -29,14 +29,14 @@ The syntax and available options are as follows:
 ]
 ```
 
-`alang` and `slang` are the language codes of the audio and subtitle tracks, while `blacklist` and `whitelist` are optional filters that can be used to choose subtitle tracks based on their track names. The blacklist requires that all entries not be present in the track name, while the whitelist requires that just one be present.
+`alang` and `slang` are the language codes of the audio and subtitle tracks, while `blacklist` and `whitelist` are optional filters that can be used to choose subtitle tracks based on their track names. The blacklist will trigger if any its entries be present in the track name, while the whitelist requires that just one be present.
 
 ### String Matching
 All matching is done using the lua `string.find` function, so supports [patterns](http://lua-users.org/wiki/PatternsTutorial). For example `eng?` could be used instead of `eng` so that the DVD language code `en` is also matched.
 
 ### Preference
 
-The script moves down the list track preferences until any valid pair of audio and subtitle tracks are found. Once this happens the script immediately sets the subtitle track and terminates. If none of the tracks match then trak selection is deferred to mpv.
+The script moves down the list of track preferences until any valid pair of audio and subtitle tracks are found. Once this happens the script immediately sets the subtitle track and terminates. If none of the tracks match then track selection is deferred to mpv.
 
 ### Special Strings
 There are a number of strings that can be used for the `alang` and `slang` which have special behaviour.
@@ -50,7 +50,7 @@ There are a number of strings that can be used for the `alang` and `slang` which
 **slang:**
 | String  	| Action                                        	|
 |---------	|-----------------------------------------------	|
-| no      	| disables subs if `slang` matches                	|
+| no      	| disables subs if `alang` matches                	|
 | default 	| enables subtitles with the `default` tag       	|
 | forced  	| enables subtitles with the `forced` tag       	|
 
@@ -62,7 +62,7 @@ This setting ignores `--sid=auto` by necessity, but when using synchronous mode 
 ## Synchronous vs Asynchronous Track Selection
 The script has two different ways it can select subtitles, controlled with the `preload` script-opt. The default is to load synchronously during the preload phase, which is before track selection; this allows the script to seamlessly change the subtitles to the desired track without any indication that the tracks were switched manually. This likely has better compatability with other options and scripts.
 
-The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. Therefore in some rare situations this could result in the wrong track being selected. There are three solutions to this problem:
+The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. Therefore, in some rare situations, this could result in the wrong track being selected. There are three solutions to this problem:
 
 ### Use Asynchronous Mode (default no)
 Disable the hook by setting `preload=no`. This is the simplest and most efficient solution, however it means that track switching messages will be printed to the console and it may break other scripts that use subtitle information.
