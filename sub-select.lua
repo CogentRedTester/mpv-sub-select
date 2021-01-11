@@ -60,14 +60,18 @@ local sub_tracks = {}
 --this whole function can be skipped if the user decides to load the subtitles asynchronously instead,
 --or if `--aid` is not set to `auto`
 local function find_default_audio()
-    local highest_priority = {}
+    local num_tracks = #audio_tracks
+    if num_tracks == 1 then return audio_tracks[1]
+    elseif num_tracks == 0 then return {} end
+
+    local highest_priority = nil
     local priority_str = ""
     local num_prefs = #alang_priority
-    local num_tracks = #audio_tracks
 
     --loop through the track list for any audio tracks
     for i = 1, num_tracks do
         local track = audio_tracks[i]
+        if track.forced then return track end
 
         --loop through the alang list to check if it has a preference
         local pref = 0
@@ -81,7 +85,7 @@ local function find_default_audio()
         end
 
         --format the important preferences so that we can easily use a lexicographical comparison to find the default
-        local formatted_str = string.format("%s-%04d-%s-%02d", tostring(track.forced), pref, tostring(track.default), num_tracks - track.id)
+        local formatted_str = string.format("%04d-%s-%02d", pref, tostring(track.default), num_tracks - track.id)
         msg.trace("formatted track info: " .. formatted_str)
 
         if formatted_str > priority_str then
@@ -205,9 +209,7 @@ local function preload()
     local audio = find_default_audio()
     msg.verbose("predicted audio track is "..tostring(audio.id))
 
-    if next(audio) then
-        if o.force_prediction then set_track("aid", audio.id) end
-    end
+    if o.force_prediction and next(audio) then set_track("aid", audio.id) end
     process_audio(audio)
 end
 
