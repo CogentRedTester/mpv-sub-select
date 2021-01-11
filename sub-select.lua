@@ -116,12 +116,9 @@ end
 
 --checks if the given sub matches the given track preference
 local function is_valid_sub(sub, pref)
-    if pref.slang == "default" then
-        if not sub.default then return false end
-    elseif pref.slang == "forced" then
-        if not sub.forced then return false end
-    elseif not sub.lang:find(pref.slang) then
-        return false end
+    if pref.slang == "default" and not sub.default then return false
+    elseif pref.slang == "forced" and not sub.forced then return false
+    elseif not sub.lang:find(pref.slang) then return false end
 
     local title = sub.title
 
