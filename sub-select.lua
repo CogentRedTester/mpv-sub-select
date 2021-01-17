@@ -118,7 +118,7 @@ end
 local function is_valid_sub(sub, pref)
     if pref.slang == "default" and not sub.default then return false
     elseif pref.slang == "forced" and not sub.forced then return false
-    elseif not sub.lang:find(pref.slang) then return false end
+    elseif not sub.lang:find(pref.slang) and sub.lang ~= "*" then return false end
 
     local title = sub.title
 

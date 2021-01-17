@@ -50,6 +50,7 @@ There are a number of strings that can be used for the `alang` and `slang` which
 **slang:**
 | String  	| Action                                        	|
 |---------	|-----------------------------------------------	|
+| *      	| matches any language                          	|
 | no      	| disables subs if `alang` matches                	|
 | default 	| enables subtitles with the `default` tag       	|
 | forced  	| enables subtitles with the `forced` tag       	|
