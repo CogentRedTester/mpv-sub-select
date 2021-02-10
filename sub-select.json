@@ -5,7 +5,7 @@
     },
     {
         "alang": "j[ap]n?",
-        "slang": "eng?",
+        "slang": ["eng?", "und"],
         "blacklist": [ "sign" ]
     },
     {
@@ -14,11 +14,7 @@
         "whitelist": [ "sign", "song"]
     },
     {
-        "alang": "eng?",
-        "slang": "no"
-    },
-    {
-        "alang": "no",
+        "alang": ["eng?", "no"],
         "slang": "no"
     },
     {
