@@ -108,13 +108,14 @@ end
 --checks if the given audio matches the given track preference
 local function is_valid_audio(alang, pref)
     if pref.alang == '*' then return true end
-    if alang == nil then return (pref.alang == "no") end
 
-    local pref_alangs = type(pref.alang)=="string" and {pref.alang} or pref.alang
+    local alangs = type(pref.alang) == "string" and {pref.alang} or pref.alang
 
-    for _,pref_alang in ipairs(pref_alangs) do
-        msg.verbose("Checking " .. pref_alang)
-        if alang:find(pref_alang) then return true end
+    for _,lang in ipairs(alangs) do
+        msg.verbose("Checking " .. lang)
+        if alang then
+            if alang:find(lang) then return true end
+        elseif lang == "no" then return true end
     end
     return false
 end
@@ -158,18 +159,18 @@ local function select_subtitles(alang)
     for _,pref in ipairs(prefs) do
         msg.trace("testing pref: " .. utils.to_string(pref))
         if is_valid_audio(alang, pref) then
-            --special handling when we want to disable subtitles
-            if pref.slang == "no" then
-                set_track("sid", "no")
-                return
-            end
-
             --checks if any of the subtitle tracks match the preset for the current audio
-            local pref_sublangs = type(pref.slang)=="string" and {pref.slang} or pref.slang
-            for _,pref_sublang in ipairs(pref_sublangs) do
+            local slangs = type(pref.slang) == "string" and {pref.slang} or pref.slang
+            for _,lang in ipairs(slangs) do
+
+                --special handling when we want to disable subtitles
+                if pref.slang == "no" then
+                    set_track("sid", "no")
+                    return
+                end
+
                 for _,sub_track in ipairs(sub_tracks) do
-                    if not sub_track.lang then sub_track.lang = "und" end
-                    if is_valid_sub(sub_track, pref_sublang, pref) then
+                    if is_valid_sub(sub_track, lang, pref) then
                         set_track("sid", sub_track.id)
                         return
                     end
@@ -183,8 +184,7 @@ end
 local function process_audio(audio)
     latest_audio = audio
     local alang = audio.lang
-    if not next(audio) then alang = nil
-    elseif not alang then alang = "und" end
+    if not next(audio) then alang = nil end
     select_subtitles(alang)
 end
 
@@ -247,6 +247,8 @@ local function read_track_list()
     audio_tracks = {}
     sub_tracks = {}
     for _,track in ipairs(track_list) do
+        if not track.lang then track.lang = "und" end
+
         if track.type == "audio" then
             table.insert(audio_tracks, track)
         elseif track.type == "sub" then
