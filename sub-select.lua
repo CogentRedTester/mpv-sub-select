@@ -110,15 +110,20 @@ local function is_valid_audio(alang, pref)
     if pref.alang == '*' then return true end
     if alang == nil then return (pref.alang == "no") end
 
-    if alang:find(pref.alang) then return true end
+    local pref_alangs = type(pref.alang)=="string" and {pref.alang} or pref.alang
+
+    for _,pref_alang in ipairs(pref_alangs) do
+        msg.verbose("Checking " .. pref_alang)
+        if alang:find(pref_alang) then return true end
+    end
     return false
 end
 
 --checks if the given sub matches the given track preference
-local function is_valid_sub(sub, pref)
-    if pref.slang == "default" and not sub.default then return false
-    elseif pref.slang == "forced" and not sub.forced then return false
-    elseif not sub.lang:find(pref.slang) and sub.lang ~= "*" then return false end
+local function is_valid_sub(sub, slang, pref)
+    if slang == "default" and not sub.default then return false
+    elseif slang == "forced" and not sub.forced then return false
+    elseif not sub.lang:find(slang) and sub.lang ~= "*" then return false end
 
     local title = sub.title
 
@@ -160,11 +165,14 @@ local function select_subtitles(alang)
             end
 
             --checks if any of the subtitle tracks match the preset for the current audio
-            for i = 1, #sub_tracks do
-                if not sub_tracks[i].lang then sub_tracks[i].lang = "und" end
-                if is_valid_sub(sub_tracks[i], pref) then
-                    set_track("sid", sub_tracks[i].id)
-                    return
+            local pref_sublangs = type(pref.slang)=="string" and {pref.slang} or pref.slang
+            for _,pref_sublang in ipairs(pref_sublangs) do
+                for _,sub_track in ipairs(sub_tracks) do
+                    if not sub_track.lang then sub_track.lang = "und" end
+                    if is_valid_sub(sub_track, pref_sublang, pref) then
+                        set_track("sid", sub_track.id)
+                        return
+                    end
                 end
             end
         end
