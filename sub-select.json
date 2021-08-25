@@ -19,10 +19,6 @@
     },
     {
         "alang": "*",
-        "slang": "eng?"
-    },
-    {
-        "alang": "*",
-        "slang": "und"
+        "slang": ["eng?", "und"]
     }
 ]
