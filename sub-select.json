@@ -4,14 +4,19 @@
         "slang": "forced"
     },
     {
-        "alang": "j[ap]n?",
-        "slang": ["eng?", "und"],
+        "alang": ["jpn", "ja"],
+        "slang": "eng?",
+        "blacklist": [ "sign" ]
+    },
+    {
+        "alang": ["jpn", "ja"],
+        "slang": "und",
         "blacklist": [ "sign" ]
     },
     {
         "alang": "eng?",
-        "slang": "eng?",
-        "whitelist": [ "sign", "song"]
+        "slang": ["eng?", "und"],
+        "whitelist": [ "sign", "song" ]
     },
     {
         "alang": ["eng?", "no"],
