@@ -25,8 +25,14 @@ The syntax and available options are as follows:
 `alang` and `slang` can also be arrays of valid codes to allow matching with multiple language codes.
 If multiple `slang` languages are included, then the first code to match to a track will be the one used.
 
+**Do not use uppercase characters for any options unless using [patterns](#string-matching).**
+
+All titles are converted to lowercase automatically to allow more matches.
+
 ### String Matching
-All matching is done using the lua `string.find` function, so supports [patterns](http://lua-users.org/wiki/PatternsTutorial). For example `eng?` could be used instead of `eng` so that the DVD language code `en` is also matched.
+All matching is done using the lua `string.find` function, so supports [patterns](https://www.lua.org/manual/5.1/manual.html#5.4.1). For example `eng?` could be used instead of `eng` so that the DVD language code `en` is also matched.
+
+**The characters `^$()%.[]*+-?` have special behaviour and muct be escaped with `%`.**
 
 ### Preference
 
