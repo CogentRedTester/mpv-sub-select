@@ -113,15 +113,12 @@ end
 
 --checks if the given audio matches the given track preference
 local function is_valid_audio(alang, pref)
-    if pref.alang == '*' then return true end
-
     local alangs = type(pref.alang) == "string" and {pref.alang} or pref.alang
 
     for _,lang in ipairs(alangs) do
-        msg.verbose("Checking " .. lang)
-        if alang then
-            if alang:find(lang) then return true end
-        elseif lang == "no" then return true end
+        if lang == '*' then return true
+        elseif alang and alang:find(lang) then return true
+        elseif not alang and lang == "no" then return true end
     end
     return false
 end
@@ -133,7 +130,7 @@ local function is_valid_sub(sub, slang, pref)
     elseif slang == "forced" then
         if not sub.forced then return false end
     else
-        if not sub.lang:find(slang) and sub.lang ~= "*" then return false end
+        if not sub.lang:find(slang) and slang ~= "*" then return false end
     end
 
     local title = sub.title
