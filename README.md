@@ -21,7 +21,9 @@ The syntax and available options are as follows:
 ]
 ```
 
-`alang` and `slang` are the language codes of the audio and subtitle tracks, while `blacklist` and `whitelist` are optional filters that can be used to choose subtitle tracks based on their track names. The blacklist and whitelist will trigger if any of their entries are present in the track name.
+`alang` and `slang` are the language codes of the audio and subtitle tracks,
+while `blacklist` and `whitelist` are optional filters that can be used to choose subtitle tracks based on their track names.
+For a track to be selected it must match any entry in the `whitelist` and must not match any entry in the `blacklist`.
 
 `alang` and `slang` can also be arrays of valid codes to allow matching with multiple language codes.
 If multiple `slang` languages are included, then the first code to match to a track will be the one used.

@@ -138,36 +138,32 @@ local function is_valid_sub(sub, slang, pref)
 
     local title = sub.title
 
-    --whitelist/blacklist handling
-    if pref.whitelist then
-        if not title then return false end
-        title = title:lower()
-        local found = false
+    -- if the whitelist is not set then we don't need to find anything
+    local passes_whitelist = not pref.whitelist
+    local passes_blacklist = true
 
+    -- whitelist/blacklist handling
+    if pref.whitelist and title then
         for _,word in ipairs(pref.whitelist) do
-            if title:find(word) then found = true end
+            if title:lower():find(word) then passes_whitelist = true end
         end
-
-        if not found then return false end
     end
 
-    if pref.blacklist then
-        if not title then return true end
-        title = title:lower()
-
+    if pref.blacklist and title then
         for _,word in ipairs(pref.blacklist) do
-            if title:find(word) then return false end
+            if title:lower():find(word) then passes_blacklist = false end
         end
     end
 
-    return true
+    return passes_whitelist and passes_blacklist
 end
 
 --scans the track list and selects subtitle tracks which match the track preferences
 local function select_subtitles(alang)
     --searching the selection presets for one that applies to this track
     for _,pref in ipairs(prefs) do
-        msg.trace("testing pref: " .. utils.to_string(pref))
+        msg.trace("testing pref:", utils.to_string(pref))
+
         if is_valid_audio(alang, pref) then
             --checks if any of the subtitle tracks match the preset for the current audio
             local slangs = type(pref.slang) == "string" and {pref.slang} or pref.slang
