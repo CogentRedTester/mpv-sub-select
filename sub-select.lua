@@ -116,6 +116,8 @@ local function is_valid_audio(alang, pref)
     local alangs = type(pref.alang) == "string" and {pref.alang} or pref.alang
 
     for _,lang in ipairs(alangs) do
+        msg.debug("Checking for valid audio:", lang)
+
         if lang == '*' then return true
         elseif alang and alang:find(lang) then return true
         elseif not alang and lang == "no" then return true end
@@ -125,13 +127,9 @@ end
 
 --checks if the given sub matches the given track preference
 local function is_valid_sub(sub, slang, pref)
-    if slang == "default" then
-        if not sub.default then return false end
-    elseif slang == "forced" then
-        if not sub.forced then return false end
-    else
-        if not sub.lang:find(slang) and slang ~= "*" then return false end
-    end
+    if slang == "default" and not sub.default then return false
+    elseif slang == "forced" and not sub.forced then return false
+    elseif not sub.lang:find(slang) and slang ~= "*" then return false end
 
     local title = sub.title
 
@@ -152,30 +150,36 @@ local function is_valid_sub(sub, slang, pref)
         end
     end
 
+    msg.trace(string.format("%s %s whitelist: %s | %s blacklist: %s",
+        title,
+        passes_whitelist and "passed" or "failed", utils.to_string(pref.whitelist),
+        passes_blacklist and "passed" or "failed", utils.to_string(pref.blacklist)
+    ))
     return passes_whitelist and passes_blacklist
 end
 
 --scans the track list and selects subtitle tracks which match the track preferences
 local function select_subtitles(alang)
+    msg.debug("select subtitle for", alang)
+
     --searching the selection presets for one that applies to this track
     for _,pref in ipairs(prefs) do
-        msg.trace("testing pref:", utils.to_string(pref))
+        msg.trace("checking pref:", utils.to_string(pref))
 
         if is_valid_audio(alang, pref) then
             --checks if any of the subtitle tracks match the preset for the current audio
             local slangs = type(pref.slang) == "string" and {pref.slang} or pref.slang
+            msg.verbose("valid audio preference found:", utils.to_string(pref.alang))
 
-            for _,lang in ipairs(slangs) do
+            for _,slang in ipairs(slangs) do
+                msg.debug("checking for valid sub:", slang)
+
                 --special handling when we want to disable subtitles
-                if lang == "no" then
-                    set_track("sid", "no")
-                    return
-                end
+                if slang == "no" then return set_track("sid", "no") end
 
                 for _,sub_track in ipairs(sub_tracks) do
-                    if is_valid_sub(sub_track, lang, pref) then
-                        set_track("sid", sub_track.id)
-                        return
+                    if is_valid_sub(sub_track, slang, pref) then
+                        return set_track("sid", sub_track.id)
                     end
                 end
             end
