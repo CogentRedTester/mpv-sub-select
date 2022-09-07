@@ -15,11 +15,17 @@
     },
     {
         "alang": "eng?",
-        "slang": ["eng?", "und"],
+        "slang": [
+            "eng?",
+            "und"
+        ],
         "whitelist": [ "sign", "song" ]
     },
     {
-        "alang": ["eng?", "no"],
+        "alang": [
+            "eng?",
+            "no"
+        ],
         "slang": "no"
     },
     {
