@@ -138,6 +138,9 @@ end
 --checks if the given sub matches the given track preference
 local function is_valid_sub(sub, slang, pref)
     msg.trace("checking sub", slang, "against track", utils.to_string(sub))
+
+    -- Do not try to un-nest these if statements, it will break detection of default and forced tracks.
+    -- I've already had to un-nest these statements twice due to this mistake, don't let it happen again.
     if slang == "default" then
         if not sub.default then return false end
     elseif slang == "forced" then
