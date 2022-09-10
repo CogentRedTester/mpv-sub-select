@@ -55,10 +55,10 @@ There are a number of strings that can be used for the `alang` and `slang` which
 **slang:**
 | String  | Action                                        |
 |---------|-----------------------------------------------|
-| *       | matches any language                          |
+| *       | matches the first track that passes the filters|
 | no      | disables subs if `alang` matches              |
-| default | enables subtitles with the `default` tag      |
-| forced  | enables subtitles with the `forced` tag       |
+| default | selects subtitles with the `default` tag      |
+| forced  | selects subtitles with the `forced` tag       |
 
 ## Commands
 
