@@ -112,15 +112,25 @@ local function set_track(type, id)
 end
 
 --checks if the given audio matches the given track preference
-local function is_valid_audio(alang, pref)
+local function is_valid_audio(audio, pref)
     local alangs = type(pref.alang) == "string" and {pref.alang} or pref.alang
 
     for _,lang in ipairs(alangs) do
         msg.debug("Checking for valid audio:", lang)
 
-        if lang == '*' then return true
-        elseif alang and alang:find(lang) then return true
-        elseif not alang and lang == "no" then return true end
+        if not audio and lang == "no" then
+            return true
+        elseif audio then
+            if lang == '*' then
+                return true
+            elseif lang == "forced" then
+                if audio.forced then return true end
+            elseif lang == "default" then
+                if audio.default then return true end
+            else
+                if audio.lang and audio.lang:find(lang) then return true end
+            end
+        end
     end
     return false
 end
@@ -164,14 +174,14 @@ local function is_valid_sub(sub, slang, pref)
 end
 
 --scans the track list and selects subtitle tracks which match the track preferences
-local function select_subtitles(alang)
-    msg.debug("select subtitle for", alang)
+local function select_subtitles(audio)
+    msg.debug("select subtitle for", utils.to_string(audio))
 
     --searching the selection presets for one that applies to this track
     for _,pref in ipairs(prefs) do
         msg.trace("checking pref:", utils.to_string(pref))
 
-        if is_valid_audio(alang, pref) then
+        if is_valid_audio(audio, pref) then
             --checks if any of the subtitle tracks match the preset for the current audio
             local slangs = type(pref.slang) == "string" and {pref.slang} or pref.slang
             msg.verbose("valid audio preference found:", utils.to_string(pref.alang))
@@ -194,10 +204,12 @@ end
 
 --extract the language code from an audio track node and pass it to select_subtitles
 local function process_audio(audio)
+    if not audio then audio = {} end
     latest_audio = audio
-    local alang = audio.lang
-    if not next(audio) then alang = nil end
-    select_subtitles(alang)
+
+    -- if the audio track has no fields we assume that there is no actual track selected
+    if audio and not next(audio) then audio = nil end
+    select_subtitles(audio)
 end
 
 --returns the audio node for the currently playing audio track

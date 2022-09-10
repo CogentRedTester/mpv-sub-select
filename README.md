@@ -50,7 +50,9 @@ There are a number of strings that can be used for the `alang` and `slang` which
 | String | Action                                  |
 |--------|-----------------------------------------|
 | *      | matches any language                    |
-| no     | matches when no audio track is selected |
+| no     | matches when no audio track is selected - not included by `*` |
+| default| matches audio with the `default` tag    |
+| forced | matches audio with the `forced` tag     |
 
 **slang:**
 | String  | Action                                        |
