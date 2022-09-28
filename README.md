@@ -102,6 +102,10 @@ Check the audio track when playback starts and compare with the latest predictio
 
 Auto-Select Mode enables this intrinsically.
 
+### Only Use Forced Subtitles if Explicitly Included (default no)
+
+By default, when searching for subtitle tracks with a specific language, forced subtitles will be included in the search results and treated the same as other tracks. This means that there's no way to write a rule that specifically excludes forced subtitle tracks. By setting `explicit_forced_subs=yes`, forced subtitles will never be chosen unless a rule explicitly includes "forced" in `slang`.
+
 ## Examples
 
 The [sub_select.conf](/sub_select.conf) file contains all of the options for the script and their defaults. The [sub-select.json](/sub-select.json) file contains an example set of track matches.
