@@ -34,6 +34,9 @@ local o = {
     --observe audio switches and reselect the subtitles when alang changes
     observe_audio_switches = false,
 
+    --only select forced subtitles if they are explicitly included in slang
+    explicit_forced_subs = false,
+
     --the folder that contains the 'sub-select.json' file
     config = "~~/script-opts"
 }
@@ -146,6 +149,7 @@ local function is_valid_sub(sub, slang, pref)
     elseif slang == "forced" then
         if not sub.forced then return false end
     else
+        if sub.forced and o.explicit_forced_subs then return false end
         if not sub.lang:find(slang) and slang ~= "*" then return false end
     end
 
