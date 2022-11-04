@@ -58,6 +58,37 @@ local alang_priority = mp.get_property_native("alang", {})
 local audio_tracks = {}
 local sub_tracks = {}
 
+--returns a table that stores the given table t as the __index in its metatable
+--creates a prototypally inherited table
+local function redirect_table(t, new)
+    return setmetatable(new or {}, { __index = t })
+end
+
+--evaluates and runs the given string in both Lua 5.1 and 5.2
+--the name argument is used for error reporting
+--provides the mpv modules and the fb module to the string
+local function evaluate_string(str, env)
+    env = redirect_table(_G, env)
+    env.mp = redirect_table(mp)
+    env.msg = redirect_table(msg)
+    env.utils = redirect_table(utils)
+
+    local chunk, err
+    if setfenv then
+        chunk, err = loadstring(str)
+        if chunk then setfenv(chunk, env) end
+    else
+        chunk, err = load(str, nil, 't', env)
+    end
+    if not chunk then
+        msg.warn('failed to load string:', str)
+        msg.error(err)
+        chunk = function() return nil end
+    end
+
+    return chunk()
+end
+
 --anticipates the default audio track
 --returns the node for the predicted track
 --this whole function can be skipped if the user decides to load the subtitles asynchronously instead,
@@ -200,7 +231,9 @@ local function select_subtitles(audio)
                 if slang == "no" then return set_track("sid", "no") end
 
                 for _,sub_track in ipairs(sub_tracks) do
-                    if is_valid_sub(sub_track, slang, pref) then
+                    if  is_valid_sub(sub_track, slang, pref)
+                        and (not pref.condition or (evaluate_string('return '..pref.condition, { audio = audio, sub = sub_track }) == true))
+                    then
                         return set_track("sid", sub_track.id)
                     end
                 end

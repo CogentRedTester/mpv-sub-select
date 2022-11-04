@@ -15,8 +15,9 @@ The syntax and available options are as follows:
     {
         "alang": "jpn",
         "slang": "eng",
-        "blacklist": [ "sign" ],
-        "whitelist": [ "english", "song" ]
+        "blacklist": [ "sign" ],                // optional
+        "whitelist": [ "english", "song" ],     // optional
+        "condition": "sub.codec == 'ass'"       // optional
     }
 ]
 ```
@@ -31,6 +32,11 @@ If multiple `slang` languages are included, then the first code to match to a tr
 **Do not use uppercase characters for any options unless using [patterns](#string-matching).**
 
 All titles are converted to lowercase automatically to allow more matches.
+
+`condition` is an optional lua expression that can be used to evaluate whether or not the subtitle should be selected.
+This expression will be run for every subtitle that passes the other filters. The `sub` variable contains the subtitle
+track entry and `audio` contains the audio track entry. See the [track-list property](https://mpv.io/manual/master/#command-interface-track-list)
+for what fields are available. The `mp`, `mp.msg`, and `mp.utils` modules are avaialble as `mp`, `msg`, and `utils`, respectively.
 
 ### String Matching
 
@@ -79,7 +85,6 @@ This command will enable/disable the script. Valid arguments are `enable`, `disa
 The `detect_audio_switches` script-opt allows one to enable Auto-Switch Mode. In this mode the script will automatically reselect the subtitles when the script detects that the audio language has changed.
 This setting ignores `--sid=auto`, but when using synchronous mode the script will not change the original `sid` until the first audio switch. This feature still respects `--track-auto-selection`.
 This mode can be disabled during runtime wi the `sub-select` script message shown above.
-
 
 ## Synchronous vs Asynchronous Track Selection
 
