@@ -341,6 +341,8 @@ if o.observe_audio_switches then
     end)
 end
 
+mp.observe_property('track-list/count', 'number', read_track_list)
+
 --force subtitle selection during playback
 mp.register_script_message("select-subtitles", async_load)
 
