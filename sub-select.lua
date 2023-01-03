@@ -286,7 +286,7 @@ end
 
 --select subtitles synchronously during the on_preloaded hook
 local function preload()
-    if o.select_audio then select_tracks() end
+    if o.select_audio then return select_tracks() end
 
     local audio = predict_audio()
     if o.force_prediction and next(audio) then set_track("aid", audio.id) end
@@ -343,7 +343,7 @@ if o.preload then
     end)
 
     --double check if the predicted subtitle was correct
-    if o.detect_incorrect_predictions and not o.force_prediction and not o.observe_audio_switches then
+    if o.detect_incorrect_predictions and not o.select_audio and not o.force_prediction and not o.observe_audio_switches then
         mp.register_event("file-loaded", reselect_subtitles)
     end
 else
