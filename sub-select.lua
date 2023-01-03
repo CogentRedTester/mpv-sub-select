@@ -23,6 +23,10 @@ local o = {
     --disabling this will switch the subtitle track after playback starts
     preload = true,
 
+    --experimental audio track selection based on the preferences.
+    --this overrides force_prection and detect_incorrect_predictions.
+    select_audio = false,
+
     --remove any potential prediction failures by forcibly selecting whichever
     --audio track was predicted
     force_prediction = false,
@@ -140,7 +144,7 @@ end
 --sets the subtitle track to the given sid
 --this is a function to prepare for some upcoming functionality, but I've forgotten what that is
 local function set_track(type, id)
-    msg.verbose("setting "..type.." to " .. id)
+    msg.verbose("setting", type, "to", id)
     if mp.get_property_number(type) == id then return end
     mp.set_property(type, id)
 end
@@ -152,7 +156,7 @@ local function is_valid_audio(audio, pref)
     for _,lang in ipairs(alangs) do
         msg.debug("Checking for valid audio:", lang)
 
-        if not audio and lang == "no" then
+        if (not audio or not next(audio)) and lang == "no" then
             return true
         elseif audio then
             if lang == '*' then
@@ -254,15 +258,6 @@ local function find_valid_tracks(manual_audio)
     end
 end
 
---extract the language code from an audio track node and pass it to select_subtitles
-local function process_audio(audio)
-    if not audio then audio = {} end
-    latest_audio = audio
-
-    -- if the audio track has no fields we assume that there is no actual track selected
-    if audio and not next(audio) then audio = nil end
-    select_subtitles(audio)
-end
 
 --returns the audio node for the currently playing audio track
 local function find_current_audio()
@@ -270,20 +265,32 @@ local function find_current_audio()
     return audio_tracks[aid] or {}
 end
 
+--extract the language code from an audio track node and pass it to select_subtitles
+local function select_tracks(audio)
+    -- if the audio track has no fields we assume that there is no actual track selected
+    local aid, sid = find_valid_tracks(audio)
+    if sid then
+        set_track('sid', sid == 0 and 'no' or sid)
+    end
+    if aid and o.select_audio then
+        set_track('aid', aid == 0 and 'no' or aid)
+    end
+
+    latest_audio = find_current_audio()
+end
+
 --select subtitles asynchronously after playback start
 local function async_load()
-    local current = find_current_audio()
-    process_audio(current)
-    if o.observe_audio_switches then latest_audio = current end
+    select_tracks(not o.select_audio and find_current_audio() or nil)
 end
 
 --select subtitles synchronously during the on_preloaded hook
 local function preload()
-    local audio = predict_audio()
+    if o.select_audio then select_tracks() end
 
+    local audio = predict_audio()
     if o.force_prediction and next(audio) then set_track("aid", audio.id) end
-    process_audio(audio)
-    if o.observe_audio_switches then latest_audio = audio end
+    select_tracks(audio)
 end
 
 local track_auto_selection = true
@@ -304,7 +311,7 @@ local function reselect_subtitles()
         local audio = audio_tracks[aid] or {}
         if audio.lang ~= latest_audio.lang then
             msg.info("detected audio change - reselecting subtitles")
-            process_audio(audio)
+            select_tracks(audio)
         end
     end
 end
