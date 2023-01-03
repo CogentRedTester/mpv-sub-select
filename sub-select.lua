@@ -90,7 +90,9 @@ local function evaluate_string(str, env)
         chunk = function() return nil end
     end
 
-    return chunk()
+    local success, boolean = pcall(chunk)
+    if not success then msg.error(boolean) end
+    return boolean
 end
 
 --anticipates the default audio track
