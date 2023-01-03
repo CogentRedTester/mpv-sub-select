@@ -1,6 +1,7 @@
 # mpv-sub-select
 
 This script allows you to configure advanced subtitle track selection based on the current audio track and the names and language of the subtitle tracks. The script will automatically disable itself when mpv is started with `--sid` not set to `auto`, or when `--track-auto-selection` is disabled.
+There is also experimental mode which allows [audio selection](#audio-selection) as well.
 
 ## Configuration
 
@@ -87,11 +88,29 @@ The `detect_audio_switches` script-opt allows one to enable Auto-Switch Mode. In
 This setting ignores `--sid=auto`, but when using synchronous mode the script will not change the original `sid` until the first audio switch. This feature still respects `--track-auto-selection`.
 This mode can be disabled during runtime wi the `sub-select` script message shown above.
 
+## Audio Selection
+
+This is an experimental option to allow advanced selection of pairs of audio and subtitle
+tracks. Controlled by the `select_audio` option.
+
+When this option is enabled the script will go through the list
+of preferences as usual, but instead of comparing the sub tracks against the current audio
+track it will compare it against all audio tracks. If any audio tracks match the alang
+and there are subs that match the slang and filters, then that audio track will be
+selected.
+
+If multiple audio tracks match a preference then the track that occurs first in the
+track list will be chosen. This option does not break `observe_audio_switches`
+but will disable the `force_prediction` and `detect_incorrect_predictions` options.
+
+The `whitelist` and `blacklist` will still only work with subs, but the `condition` filter
+can be used to implement audio-specific filtering behaviour.
+
 ## Synchronous vs Asynchronous Track Selection
 
 The script has two different ways it can select subtitles, controlled with the `preload` script-opt. The default is to load synchronously during the preload phase, which is before track selection; this allows the script to seamlessly change the subtitles to the desired track without any indication that the tracks were switched manually. This likely has better compatability with other options and scripts.
 
-The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. Therefore, in some rare situations, this could result in the wrong audio track prediction, and hence the wrong subtitle being selected. There are three solutions to this problem:
+The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. Therefore, in some rare situations, this could result in the wrong audio track prediction, and hence the wrong subtitle being selected. There are several solutions to this problem:
 
 ### Use Asynchronous Mode (default no)
 
@@ -107,6 +126,10 @@ This method works well, but is not ideal if one wants to utilise a more refined 
 Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This can be disabled with `detect_incorrect_predictions=no`. This is the best of both worlds, since 99% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
 
 Auto-Select Mode enables this intrinsically.
+
+### Use audio selection mode (default no)
+
+See [Audio Selection](#audio-selection).
 
 ## Examples
 
