@@ -37,6 +37,7 @@ All titles are converted to lowercase automatically to allow more matches.
 This expression will be run for every subtitle that passes the other filters. The `sub` variable contains the subtitle
 track entry and `audio` contains the audio track entry. See the [track-list property](https://mpv.io/manual/master/#command-interface-track-list)
 for what fields are available. The `mp`, `mp.msg`, and `mp.utils` modules are avaialble as `mp`, `msg`, and `utils`, respectively.
+If no audio or sub track is being compared (which only happens if you set alang or slang to `no`) then `audio` or `sub` will evaluate to `nil`.
 
 ### String Matching
 

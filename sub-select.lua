@@ -245,11 +245,13 @@ local function find_valid_tracks(manual_audio)
                     msg.debug("checking for valid sub:", slang)
 
                     --special handling when we want to disable subtitles
-                    if slang == "no" then return aid, 0 end
+                    if slang == "no"  and (not pref.condition or (evaluate_string('return '..pref.condition, { audio = audio_track or nil }) == true))then
+                        return aid, 0
+                    end
 
                     for _,sub_track in ipairs(sub_tracks) do
                         if  is_valid_sub(sub_track, slang, pref)
-                            and (not pref.condition or (evaluate_string('return '..pref.condition, { audio = audio_track, sub = sub_track }) == true))
+                            and (not pref.condition or (evaluate_string('return '..pref.condition, { audio = audio_track or nil, sub = sub_track }) == true))
                         then
                             return aid, sub_track.id
                         end
