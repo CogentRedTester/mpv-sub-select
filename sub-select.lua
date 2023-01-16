@@ -155,6 +155,9 @@ end
 local function is_valid_audio(audio, pref)
     local alangs = type(pref.alang) == "string" and {pref.alang} or pref.alang
 
+    --if alang is not set, allow any audio track
+    if not alangs then return true end
+
     for _,lang in ipairs(alangs) do
         msg.debug("Checking for valid audio:", lang)
 
