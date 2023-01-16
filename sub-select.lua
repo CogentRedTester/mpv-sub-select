@@ -319,14 +319,14 @@ local function find_valid_tracks(manual_audio)
                         msg.info("secondary subtitles =>", not sec_sid and "not set" or (sec_sid == 0 and "disabled" or (
                             sec_sub_track and sec_sub_track.lang or "unknown"
                         )), ";", sec_sub_track and sec_sub_track.title or "")
-                        return aid, sid, sec_sid
+                        return aid, sid, sec_sid, pref.sub_visibility, pref.secondary_sub_visibility
                     end
                 end
             end
         end
     end
     msg.info("no valid subtitles matching the preferences found")
-    return nil, nil, nil
+    return nil, nil, nil, nil, nil
 end
 
 
@@ -339,7 +339,7 @@ end
 --extract the language code from an audio track node and pass it to select_subtitles
 local function select_tracks(audio)
     -- if the audio track has no fields we assume that there is no actual track selected
-    local aid, sid, sec_sid = find_valid_tracks(audio)
+    local aid, sid, sec_sid, sub_visibility, sec_sub_visibility = find_valid_tracks(audio)
     if sid then
         set_track('sid', sid == 0 and 'no' or sid)
     end
@@ -348,6 +348,18 @@ local function select_tracks(audio)
     end
     if aid and o.select_audio then
         set_track('aid', aid == 0 and 'no' or aid)
+    end
+    if sub_visibility ~= nil then
+        msg.verbose("setting sub-visibility to", tostring(sub_visibility))
+        if not mp.get_property_bool("sub-visibility") == sub_visibility then
+            mp.set_property_bool("sub-visibility", sub_visibility)
+        end
+    end
+    if sec_sub_visibility ~= nil then
+        msg.verbose("setting secondary-sub-visibility to", tostring(sec_sub_visibility))
+        if not mp.get_property_bool("secondary-sub-visibility") == sec_sub_visibility then
+            mp.set_property_bool("secondary-sub-visibility", sec_sub_visibility)
+        end
     end
 
     latest_audio = find_current_audio()
