@@ -176,7 +176,7 @@ local function is_valid_audio(audio, pref)
 end
 
 --checks if the given sub matches the given track preference
-local function is_valid_sub(sub, slang, pref)
+local function is_valid_sub(sub, slang, whitelist, blacklist)
     msg.trace("checking sub", slang, "against track", utils.to_string(sub))
 
     -- Do not try to un-nest these if statements, it will break detection of default and forced tracks.
@@ -193,26 +193,26 @@ local function is_valid_sub(sub, slang, pref)
     local title = sub.title
 
     -- if the whitelist is not set then we don't need to find anything
-    local passes_whitelist = not pref.whitelist
+    local passes_whitelist = not whitelist
     local passes_blacklist = true
 
     -- whitelist/blacklist handling
-    if pref.whitelist and title then
-        for _,word in ipairs(pref.whitelist) do
+    if whitelist and title then
+        for _,word in ipairs(whitelist) do
             if title:lower():find(word) then passes_whitelist = true end
         end
     end
 
-    if pref.blacklist and title then
-        for _,word in ipairs(pref.blacklist) do
+    if blacklist and title then
+        for _,word in ipairs(blacklist) do
             if title:lower():find(word) then passes_blacklist = false end
         end
     end
 
     msg.trace(string.format("%s %s whitelist: %s | %s blacklist: %s",
         title,
-        passes_whitelist and "passed" or "failed", utils.to_string(pref.whitelist),
-        passes_blacklist and "passed" or "failed", utils.to_string(pref.blacklist)
+        passes_whitelist and "passed" or "failed", utils.to_string(whitelist),
+        passes_blacklist and "passed" or "failed", utils.to_string(blacklist)
     ))
     return passes_whitelist and passes_blacklist
 end
@@ -243,23 +243,90 @@ local function find_valid_tracks(manual_audio)
 
                 for _, slang in ipairs(slangs) do
                     msg.debug("checking for valid sub:", slang)
+                    local sid = nil
+                    local prim_sub_track = nil
 
                     --special handling when we want to disable subtitles
-                    if slang == "no"  and (not pref.condition or (evaluate_string('return '..pref.condition, { audio = audio_track or nil }) == true))then
-                        return aid, 0
-                    end
-
-                    for _,sub_track in ipairs(sub_tracks) do
-                        if  is_valid_sub(sub_track, slang, pref)
-                            and (not pref.condition or (evaluate_string('return '..pref.condition, { audio = audio_track or nil, sub = sub_track }) == true))
-                        then
-                            return aid, sub_track.id
+                    if slang == "no" and (not pref.condition or (evaluate_string(
+                        'return '..pref.condition, { audio = audio_track or nil }
+                    ) == true)) then
+                        sid = 0
+                    else
+                        --search for matching sub
+                        for _,sub_track in ipairs(sub_tracks) do
+                            if is_valid_sub(sub_track, slang, pref.whitelist, pref.blacklist)
+                                and (not pref.condition or (evaluate_string('return '..pref.condition, {
+                                    audio = audio_track or nil, sub = sub_track
+                                }) == true))
+                            then
+                                sid = sub_track.id
+                                prim_sub_track = sub_track
+                                break
+                            end
                         end
+                    end
+                    
+                    --if matching sub was found
+                    if sid or sid == 0 then
+                        
+                        --search for matching secondary sub
+                        local sec_sid = nil
+                        local sec_sub_track = nil
+                        if pref.secondary_slang then
+                            local sec_slangs = type(pref.secondary_slang) ==
+                                "string" and {pref.secondary_slang} or pref.secondary_slang
+                            for _, sec_slang in ipairs(sec_slangs) do
+                                if sec_slang == "no" then
+                                    sec_sid = 0
+                                    break
+                                elseif sec_slang then
+                                    --iterate through sub tracks to test against secondary slang
+                                    msg.debug("checking for secondary sub:", sec_slang)
+                                    for _,sub_track in ipairs(sub_tracks) do
+                                        if is_valid_sub(
+                                            sub_track,
+                                            sec_slang,
+                                            pref.secondary_whitelist,
+                                            pref.secondary_blacklist
+                                        ) and sub_track.id ~= sid
+                                        and (not pref.secondary_condition or (
+                                            evaluate_string('return '..pref.secondary_condition, {
+                                                audio = audio_track or nil,
+                                                sub = prim_sub_track,
+                                                secondary_sub = sub_track
+                                            }) == true
+                                        ))
+                                        then
+                                            sec_sid = sub_track.id
+                                            sec_sub_track = sub_track
+                                            break
+                                        end
+                                    end
+                                --if matching secondary sub was found
+                                if sec_sid then break end
+                                end
+                            end
+                        end
+
+                        --print and return selected tracks
+                        msg.info("tracks selected:")
+                        msg.info("audio =>", not aid and "not set" or (aid == 0 and "disabled" or (
+                            audio_track and audio_track.lang or "unknown"
+                        )), ";", audio_track and audio_track.title or "")
+                        msg.info("subtitles =>", not sid and "not set" or (sid == 0 and "disabled" or (
+                            prim_sub_track and prim_sub_track.lang or "unknown"
+                        )), ";", prim_sub_track and prim_sub_track.title or "")
+                        msg.info("secondary subtitles =>", not sec_sid and "not set" or (sec_sid == 0 and "disabled" or (
+                            sec_sub_track and sec_sub_track.lang or "unknown"
+                        )), ";", sec_sub_track and sec_sub_track.title or "")
+                        return aid, sid, sec_sid
                     end
                 end
             end
         end
     end
+    msg.info("no valid subtitles matching the preferences found")
+    return nil, nil, nil
 end
 
 
@@ -272,9 +339,12 @@ end
 --extract the language code from an audio track node and pass it to select_subtitles
 local function select_tracks(audio)
     -- if the audio track has no fields we assume that there is no actual track selected
-    local aid, sid = find_valid_tracks(audio)
+    local aid, sid, sec_sid = find_valid_tracks(audio)
     if sid then
         set_track('sid', sid == 0 and 'no' or sid)
+    end
+    if sec_sid then
+        set_track('secondary-sid', sec_sid == 0 and 'no' or sec_sid)
     end
     if aid and o.select_audio then
         set_track('aid', aid == 0 and 'no' or aid)
@@ -380,4 +450,3 @@ mp.register_script_message("sub-select", function(arg)
     if not continue_script() then return end
     async_load()
 end)
-
