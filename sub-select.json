@@ -35,5 +35,15 @@
     {
         "alang": "*",
         "slang": "und"
+    },
+    {
+        "slang": ["forced"],
+        "secondary_slang": ["eng?", "ger", "deu?"],
+        "sub_visibility": true,
+        "secondary_sub_visibility": false
+    },
+    {
+        "slang": ["eng?", "ger", "deu?"],
+        "sub_visibility": false
     }
 ]
