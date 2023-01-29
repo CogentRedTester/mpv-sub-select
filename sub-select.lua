@@ -190,7 +190,7 @@ local function is_valid_sub(sub, slang, pref)
         if not sub.lang:find(slang) and slang ~= "*" then return false end
     end
 
-    local title = sub.title
+    local title = sub.title or ''
 
     -- if the whitelist is not set then we don't need to find anything
     local passes_whitelist = not pref.whitelist
