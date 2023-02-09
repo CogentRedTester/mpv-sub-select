@@ -82,11 +82,13 @@ local function setup_prefs()
     prefs = utils.parse_json(json)
 
     assert(prefs, "Invalid JSON format in sub-select.json.")
+    local reservedIDs = { ['^'] = true }
     local IDs = {}
 
     -- storing the ID in the first pass
     for _, pref in ipairs(prefs) do
         if pref.id then
+            assert(not reservedIDs[pref.id], 'using reserved ID '..pref.id)
             assert(not IDs[pref.id], 'duplicate ID '..pref.id)
             IDs[pref.id] = pref
         end
@@ -122,6 +124,8 @@ setup_prefs()
 --the name argument is used for error reporting
 --provides the mpv modules and the fb module to the string
 local function evaluate_string(str, env)
+    msg.debug('evaluating string '..str)
+
     env = redirect_table(_G, env)
     env.mp = redirect_table(mp)
     env.msg = redirect_table(msg)
