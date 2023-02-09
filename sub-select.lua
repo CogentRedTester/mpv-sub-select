@@ -100,10 +100,7 @@ local function setup_prefs()
         assert(type_check(pref.inherit, 'string'), '`inherit` must be a string: '..pref_str)
 
         if pref.inherit then
-            local parent
-            if pref.inherit == '^' then parent = prefs[i-1]
-            else parent = IDs[pref.inherit] end
-
+            local parent = pref.inherit == '^' and prefs[i-1] or IDs[pref.inherit]
             assert(parent, 'failed to find matching id: '..pref_str)
             pref = redirect_table(parent, pref)
         end
