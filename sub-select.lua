@@ -82,14 +82,37 @@ local function setup_prefs()
     prefs = utils.parse_json(json)
 
     assert(prefs, "Invalid JSON format in sub-select.json.")
+    local IDs = {}
+
+    -- storing the ID in the first pass
+    for _, pref in ipairs(prefs) do
+        if pref.id then
+            assert(not IDs[pref.id], 'duplicate ID '..pref.id)
+            IDs[pref.id] = pref
+        end
+    end
+
+    -- doing a second pass to inherit prefs and type check
     for i, pref in ipairs(prefs) do
         local pref_str = 'pref_'..i..' '..utils.to_string(pref)
+        assert(type_check(pref.inherit, 'string'), '`inherit` must be a string: '..pref_str)
+
+        if pref.inherit then
+            local parent
+            if pref.inherit == '^' then parent = prefs[i-1]
+            else parent = IDs[pref.inherit] end
+
+            assert(parent, 'failed to find matching id: '..pref_str)
+            pref = redirect_table(parent, pref)
+        end
+
         -- type checking the options
         assert(type_check(pref.alang, 'string table', true), '`alang` must be a string or a table of strings: '..pref_str)
         assert(type_check(pref.slang, 'string table', true), '`slang` must be a string or a table of strings: '..pref_str)
         assert(type_check(pref.blacklist, 'table'), '`blacklist` must be a table: '..pref_str)
         assert(type_check(pref.whitelist, 'table'), '`whitelist` must be a table: '..pref_str)
         assert(type_check(pref.condition, 'string'), '`condition` must be a string: '..pref_str)
+        assert(type_check(pref.id, 'string'), '`id` must be a string: '..pref_str)
     end
 end
 
