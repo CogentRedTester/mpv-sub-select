@@ -36,19 +36,13 @@ If multiple `slang` languages are included, then the first code to match to a tr
 
 All titles are converted to lowercase automatically to allow more matches.
 
-`condition` is an optional lua expression that can be used to evaluate whether or not the subtitle should be selected.
-This expression will be run for every subtitle that passes the other filters. The `sub` variable contains the subtitle
-track entry and `audio` contains the audio track entry. See the [track-list property](https://mpv.io/manual/master/#command-interface-track-list)
-for what fields are available. The `mp`, `mp.msg`, and `mp.utils` modules are avaialble as `mp`, `msg`, and `utils`, respectively.
-If no audio or sub track is being compared (which only happens if you set alang or slang to `no`) then `audio` or `sub` will evaluate to `nil`.
-
 ### String Matching
 
 All matching is done using the lua `string.find` function, so supports [patterns](https://www.lua.org/manual/5.1/manual.html#5.4.1). For example `eng?` could be used instead of `eng` so that the DVD language code `en` is also matched.
 
 **The characters `^$()%.[]*+-?` have special behaviour and muct be escaped with `%`.**
 
-### Preference
+### Priority
 
 The script moves down the list of track preferences until any valid pair of audio and subtitle tracks are found. Once this happens the script immediately sets the subtitle track and terminates. If none of the tracks match then track selection is deferred to mpv.
 
@@ -71,6 +65,21 @@ There are a number of strings that can be used for the `alang` and `slang` which
 | no      | disables subs if `alang` matches              |
 | default | selects subtitles with the `default` tag      |
 | forced  | selects subtitles with the `forced` tag       |
+
+### Conditions
+
+Conditions are a way to specify advanced, powerful, and custom filters.
+The `condition` field is a lua expression that can be used to evaluate whether or not the subtitle should be selected.
+This expression will be run for every subtitle that passes the other filters. The `sub` variable contains the subtitle
+track entry and `audio` contains the audio track entry. See the [track-list property](https://mpv.io/manual/master/#command-interface-track-list)
+for what fields are available. The `mp`, `mp.msg`, and `mp.utils` modules are avaialble as `mp`, `msg`, and `utils`, respectively.
+If no audio or sub track is being compared (which only happens if you set alang or slang to `no`) then `audio` or `sub` will evaluate to `nil`.
+
+In the following examples the condition requires:
+
+* `"condition": "sub.external"` - an external subtitle file.
+* `"condition": "audio.default and sub.id == 1"` - the default audio and the first subtitle in the file.
+* `"condition": "mp.get_property('path', ''):find("Anime") ~= nil"` - the path of the current file to contain `Anime`.
 
 ### Inheritance
 
