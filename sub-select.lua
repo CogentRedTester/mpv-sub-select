@@ -47,14 +47,7 @@ local o = {
 
 opt.read_options(o, "sub_select")
 
-local file = assert(io.open(mp.command_native({"expand-path", o.config}) .. "/sub-select.json"))
-local json = file:read("*all")
-file:close()
-local prefs = utils.parse_json(json)
-
-if prefs == nil then
-    error("Invalid JSON format in sub-select.json.")
-end
+local prefs
 
 local ENABLED = o.force_enable or mp.get_property("options/sid", "auto") == "auto"
 local latest_audio = {}
@@ -72,6 +65,35 @@ local NO_TRACK = {
 local function redirect_table(t, new)
     return setmetatable(new or {}, { __index = t })
 end
+
+local function type_check(val, t, required)
+    if not val and required then return false end
+
+    -- allows values to be nil
+    if not required then t = t..' nil' end
+    if not t:find(type(val)) then return false end
+    return true
+end
+
+local function setup_prefs()
+    local file = assert(io.open(mp.command_native({"expand-path", o.config}) .. "/sub-select.json"))
+    local json = file:read("*all")
+    file:close()
+    prefs = utils.parse_json(json)
+
+    assert(prefs, "Invalid JSON format in sub-select.json.")
+    for i, pref in ipairs(prefs) do
+        local pref_str = 'pref_'..i..' '..utils.to_string(pref)
+        -- type checking the options
+        assert(type_check(pref.alang, 'string table', true), '`alang` must be a string or a table of strings: '..pref_str)
+        assert(type_check(pref.slang, 'string table', true), '`slang` must be a string or a table of strings: '..pref_str)
+        assert(type_check(pref.blacklist, 'table'), '`blacklist` must be a table: '..pref_str)
+        assert(type_check(pref.whitelist, 'table'), '`whitelist` must be a table: '..pref_str)
+        assert(type_check(pref.condition, 'string'), '`condition` must be a string: '..pref_str)
+    end
+end
+
+setup_prefs()
 
 --evaluates and runs the given string in both Lua 5.1 and 5.2
 --the name argument is used for error reporting
