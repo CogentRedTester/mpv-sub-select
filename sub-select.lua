@@ -158,8 +158,8 @@ local function is_valid_audio(audio, pref)
     for _,lang in ipairs(alangs) do
         msg.debug("Checking for valid audio:", lang)
 
-        if (not audio or not next(audio)) and lang == "no" then
-            return true
+        if (not audio or not next(audio)) then
+            if lang == "no" then return true end
         elseif audio then
             if lang == '*' then
                 return true
