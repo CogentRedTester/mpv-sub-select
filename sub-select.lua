@@ -229,7 +229,7 @@ end
 --scans the track list and selects audio and subtitle tracks which match the track preferences
 --if an audio track is provided to the function it will assume this track is the only audio
 local function find_valid_tracks(manual_audio)
-    assert(manual_audio == nil or manual_audio == NO_TRACK or (type(manual_audio) == 'table' and manual_audio.id), 'argument must be an audio track or `false` for no')
+    assert(manual_audio == nil or (type(manual_audio) == 'table' and manual_audio.id), 'argument must be an audio track or nil')
 
     local sub_track_list = {NO_TRACK, unpack(sub_tracks)}
     local audio_track_list
