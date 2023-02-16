@@ -67,10 +67,7 @@ local function redirect_table(t, new)
 end
 
 local function type_check(val, t, required)
-    if not val and required then return false end
-
-    -- allows values to be nil
-    if not required then t = t..' nil' end
+    if val == nil then return not required end
     if not t:find(type(val)) then return false end
     return true
 end
