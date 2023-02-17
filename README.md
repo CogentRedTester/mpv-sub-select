@@ -18,7 +18,9 @@ The syntax and available options are as follows:
         "slang": "eng",
         "blacklist": [ "sign" ],                // optional
         "whitelist": [ "english", "song" ],     // optional
-        "condition": "sub.codec == 'ass'"       // optional
+        "condition": "sub.codec == 'ass'",      // optional
+        "id": "unique-id",                      // optional
+        "inherit": "other-id"                   // optional
     }
 ]
 ```
@@ -34,19 +36,13 @@ If multiple `slang` languages are included, then the first code to match to a tr
 
 All titles are converted to lowercase automatically to allow more matches.
 
-`condition` is an optional lua expression that can be used to evaluate whether or not the subtitle should be selected.
-This expression will be run for every subtitle that passes the other filters. The `sub` variable contains the subtitle
-track entry and `audio` contains the audio track entry. See the [track-list property](https://mpv.io/manual/master/#command-interface-track-list)
-for what fields are available. The `mp`, `mp.msg`, and `mp.utils` modules are avaialble as `mp`, `msg`, and `utils`, respectively.
-If no audio or sub track is being compared (which only happens if you set alang or slang to `no`) then `audio` or `sub` will evaluate to `nil`.
-
 ### String Matching
 
 All matching is done using the lua `string.find` function, so supports [patterns](https://www.lua.org/manual/5.1/manual.html#5.4.1). For example `eng?` could be used instead of `eng` so that the DVD language code `en` is also matched.
 
 **The characters `^$()%.[]*+-?` have special behaviour and muct be escaped with `%`.**
 
-### Preference
+### Priority
 
 The script moves down the list of track preferences until any valid pair of audio and subtitle tracks are found. Once this happens the script immediately sets the subtitle track and terminates. If none of the tracks match then track selection is deferred to mpv.
 
@@ -69,6 +65,77 @@ There are a number of strings that can be used for the `alang` and `slang` which
 | no      | disables subs if `alang` matches              |
 | default | selects subtitles with the `default` tag      |
 | forced  | selects subtitles with the `forced` tag       |
+
+### Conditions
+
+Conditions are a way to specify advanced, powerful, and custom filters.
+The `condition` field is a lua expression that can be used to evaluate whether or not the subtitle should be selected.
+This expression will be run for every subtitle that passes the other filters. The `sub` variable contains the subtitle
+track entry and `audio` contains the audio track entry. See the [track-list property](https://mpv.io/manual/master/#command-interface-track-list)
+for what fields are available. The `mp`, `mp.msg`, and `mp.utils` modules are avaialble as `mp`, `msg`, and `utils`, respectively.
+If no audio or sub track is being compared (which only happens if you set alang or slang to `no`) then `audio` or `sub` will evaluate to `nil`.
+
+In the following examples the condition requires:
+
+* `"condition": "sub.external"` - an external subtitle file.
+* `"condition": "audio.default and sub.id == 1"` - the default audio and the first subtitle in the file.
+* `"condition": "mp.get_property('path', ''):find("Anime") ~= nil"` - the path of the current file to contain `Anime`.
+
+### Inheritance
+
+To make it easier to write complex config files you can set the preferences to inherit from each other.
+This will reduce the need to duplicate the same fields in multiple preferences. Inheritence uses the
+`id` and `inherit` fields. The `id` field must be a string that is unique to that preference
+(no two preferences can have the same ID). The `inherit` field can be used to specify the ID of the preference
+to inherit from. The special (reserved) ID `^` will inherit from the previous preference without it needing an explicit ID.
+
+The new child preference will inherit all the fields from the parent that have not been explicitly overwritten.
+Inheritance can be chained, but make sure not to create circular inheritance.
+
+In the below example the first preference inherits the `alang` and `slang` fields from the second preference.
+The first preference adds a `condition` field to prefer external subtitles.
+
+```json
+[
+    {
+        "inherit": "example-id",
+        "condition": "sub.external"
+    },
+    {
+        "alang": "*",
+        "slang": "eng?",
+        "id": "example-id",
+    }
+]
+```
+
+In this more complex example external subtitles are the main preference, followed
+by a preference for ass subtitles. The special `^` ID is used to simplify the config.
+Note the final preference needs to add a superfluous `condition` statement to override
+the inherited condition from the third preference.
+
+```json
+[
+    {
+        "alang": ["jpn", "ja"],
+        "slang": "eng",
+        "whitelist": [ "sign", "song"],
+        "condition": "sub.codec == 'ass' and sub.external" 
+    },
+    {
+        "inherit": "^",
+        "condition": "sub.external" 
+    },
+    {
+        "inherit": "^",
+        "condition": "sub.codec == 'ass'" 
+    },
+    {
+         "inherit": "^",
+         "condition": "sub.codec ~= 'ass'"
+    }
+]
+```
 
 ## Commands
 
