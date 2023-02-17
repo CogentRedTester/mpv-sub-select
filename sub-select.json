@@ -9,16 +9,12 @@
         "blacklist": [ "sign" ]
     },
     {
-        "alang": ["jpn", "ja"],
-        "slang": "und",
-        "blacklist": [ "sign" ]
+        "inherit": "^",
+        "slang": "und"
     },
     {
         "alang": "eng?",
-        "slang": [
-            "eng?",
-            "und"
-        ],
+        "slang": [ "eng?", "und" ],
         "whitelist": [ "sign", "song" ]
     },
     {
@@ -27,11 +23,7 @@
     },
     {
         "alang": "*",
-        "slang": "eng?"
-    },
-    {
-        "alang": "*",
-        "slang": "und"
+        "slang": [ "eng?", "und" ]
     },
     {
         "alang": "no",
