@@ -1,7 +1,8 @@
 [
     {
-        "alang": "*",
-        "slang": "forced"
+        "alang": ["eng?", "und"],
+        "slang": ["eng?", "und"],
+        "condition": "sub.forced"
     },
     {
         "alang": ["jpn", "ja"],
