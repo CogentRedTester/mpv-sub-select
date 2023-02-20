@@ -200,4 +200,6 @@ See [Audio Selection](#audio-selection).
 
 ## Examples
 
-The [sub_select.conf](/sub_select.conf) file contains all of the options for the script and their defaults. The [sub-select.json](/sub-select.json) file contains an example set of track matches.
+The [sub_select.conf](/sub_select.conf) file contains all of the options for the script and their defaults.
+The [sub-select.json](/sub-select.json) file contains a decent default configuration for English users.
+The [wiki page](https://github.com/CogentRedTester/mpv-sub-select/wiki/Example-Configs) provides some more custom examples.
