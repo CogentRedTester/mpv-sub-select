@@ -79,7 +79,7 @@ In the following examples the condition requires:
 
 * `"condition": "sub.external"` - an external subtitle file.
 * `"condition": "audio.default and sub.id == 1"` - the default audio and the first subtitle in the file.
-* `"condition": "mp.get_property('path', ''):find("Anime") ~= nil"` - the path of the current file to contain `Anime`.
+* `"condition": "mp.get_property('path', ''):find(\"Anime\") ~= nil"` - the path of the current file to contain `Anime`.
 
 ### Inheritance
 
