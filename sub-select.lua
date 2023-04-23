@@ -73,7 +73,7 @@ local function type_check(val, t, required)
 end
 
 local function setup_prefs()
-    local file = assert(io.open(mp.command_native({"expand-path", o.config}) .. "/sub-select.json"))
+    local file = assert(io.open(mp.command_native({"expand-path", o.config .. "/sub-select.json"})))
     local json = file:read("*all")
     file:close()
     prefs = utils.parse_json(json)
