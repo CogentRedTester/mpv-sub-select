@@ -102,9 +102,11 @@ local function setup_prefs()
             pref = redirect_table(parent, pref)
         end
 
+
         -- type checking the options
         assert(type_check(pref.alang, 'string table', true), '`alang` must be a string or a table of strings: '..pref_str)
         assert(type_check(pref.slang, 'string table', true), '`slang` must be a string or a table of strings: '..pref_str)
+        assert(type_check(pref.dlang, 'string table'), '`dlang` must be a string or a table of strings: '..pref_str)
         assert(type_check(pref.blacklist, 'table'), '`blacklist` must be a table: '..pref_str)
         assert(type_check(pref.whitelist, 'table'), '`whitelist` must be a table: '..pref_str)
         assert(type_check(pref.condition, 'string'), '`condition` must be a string: '..pref_str)
@@ -298,6 +300,22 @@ local function find_valid_tracks(manual_audio)
                 local slangs = type(pref.slang) == "string" and {pref.slang} or pref.slang
                 msg.trace("valid audio preference found:", utils.to_string(pref.alang))
 
+				local did = nil
+                local dlangs = type(pref.dlang) == "string" and {pref.dlang} or pref.dlang
+                for _, dlang in ipairs(dlangs) do
+                    msg.trace("checking for valid dual sub:", dlang)
+
+                    for _,sub_track in ipairs(sub_track_list) do
+                        if  is_valid_sub(sub_track, dlang, pref)
+                            and (not pref.condition or (evaluate_string('return '..pref.condition, {
+                                sub = sub_track.id > 0 and sub_track or nil
+                            }) == true))
+                        then
+                            msg.verbose("valid dual subtitle preference found:", utils.to_string(pref.dlang))
+                            did = sub_track and sub_track.id
+                        end
+                    end
+                end
                 for _, slang in ipairs(slangs) do
                     msg.trace("checking for valid sub:", slang)
 
@@ -311,7 +329,7 @@ local function find_valid_tracks(manual_audio)
                         then
                             msg.verbose("valid audio preference found:", utils.to_string(pref.alang))
                             msg.verbose("valid subtitle preference found:", utils.to_string(pref.slang))
-                            return aid, sub_track and sub_track.id
+                            return aid, sub_track and sub_track.id, did
                         end
                     end
                 end
@@ -330,12 +348,15 @@ end
 --extract the language code from an audio track node and pass it to select_subtitles
 local function select_tracks(audio)
     -- if the audio track has no fields we assume that there is no actual track selected
-    local aid, sid = find_valid_tracks(audio)
+    local aid, sid, did = find_valid_tracks(audio)
     if sid then
         set_track('sid', sid == 0 and 'no' or sid)
     end
     if aid and o.select_audio then
         set_track('aid', aid == 0 and 'no' or aid)
+    end
+    if did then
+		set_track('secondary-sid', did == 0 and 'no' or did)
     end
 
     latest_audio = find_current_audio()
