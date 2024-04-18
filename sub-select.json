@@ -1,7 +1,7 @@
 [
     {
         "alang": ["eng?", "und"],
-        "slang": ["eng?", "und"],
+        "slang": ["en%-us", "eng?", "und"],
         "condition": "sub.forced"
     },
     {
@@ -15,7 +15,7 @@
     },
     {
         "alang": "eng?",
-        "slang": [ "eng?", "und" ],
+        "slang": [ "en%-us", "eng?", "und" ],
         "whitelist": [ "sign", "song" ]
     },
     {
@@ -24,7 +24,7 @@
     },
     {
         "alang": "*",
-        "slang": [ "eng?", "und" ]
+        "slang": [ "en%-us", "eng?", "und" ]
     },
     {
         "alang": "no",
