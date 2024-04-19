@@ -118,7 +118,7 @@ the inherited condition from the third preference.
 [
     {
         "alang": ["jpn", "ja"],
-        "slang": "eng",
+        "slang": ["en%-us", "eng?"],
         "whitelist": [ "sign", "song"],
         "condition": "sub.codec == 'ass' and sub.external" 
     },
