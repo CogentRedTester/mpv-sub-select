@@ -361,7 +361,7 @@ mp.observe_property("track-auto-selection", "bool", function(_,b) track_auto_sel
 local function continue_script(initial_file_load)
     if #sub_tracks < 1 then return false end
     if not ENABLED then return false end
-    if initial_file_load and mp.get_property('sid') ~= 'auto' then return false end
+    if initial_file_load and mp.get_property('options/sid') ~= 'auto' then return false end
     if not track_auto_selection then return false end
     return true
 end
