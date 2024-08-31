@@ -172,7 +172,7 @@ local function predict_audio()
             if track.lang == alang_priority[j] then
 
                 --a lower number j has higher priority, so flip the numbers around so the lowest j has highest preference
-                pref = num_prefs - j
+                pref = 1000 - j
                 break
             end
         end
