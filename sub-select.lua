@@ -324,7 +324,7 @@ local function select_tracks(audio)
         set_track('aid', aid == 0 and 'no' or aid)
     end
 
-    latest_audio = audio
+    latest_audio = audio or find_current_audio()
 end
 
 --select subtitles asynchronously after playback start
@@ -350,12 +350,21 @@ local function selection_enabled()
     return true
 end
 
+local INITIAL_LOAD = true
+local ORIGINAL_SID = mp.get_property('options/sid')
+
+mp.add_hook('on_load', 50, function()
+    INITIAL_LOAD = true
+    ORIGINAL_SID = mp.get_property('options/sid')
+end)
+
 --reselect the subtitles if the audio is different from what was last used
 local function reselect_subtitles()
+    local initial = INITIAL_LOAD
+    INITIAL_LOAD = false
     if not selection_enabled() then return end
     local audio = find_current_audio()
-    if latest_audio.id ~= audio.id then
-
+    if latest_audio.id ~= audio.id and (not initial or ORIGINAL_SID == 'auto') then
         msg.info("detected audio change - reselecting subtitles")
         select_tracks(audio)
     end
@@ -385,7 +394,6 @@ local function unobserve_audio_switches()
     mp.unobserve_property(reselect_subtitles)
 end
 
---setup the audio and subtitle track lists when a new file is loaded
 mp.add_hook('on_preloaded', 25, read_track_list)
 mp.add_hook('on_preloaded', 26, function() latest_audio = predict_audio() end)
 
