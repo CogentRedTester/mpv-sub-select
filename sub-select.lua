@@ -17,7 +17,6 @@ local o = {
     force_enable = false,
 
     --experimental audio track selection based on the preferences.
-    --this overrides force_prection and detect_incorrect_predictions.
     select_audio = false,
 
     --observe audio switches and reselect the subtitles when alang changes
