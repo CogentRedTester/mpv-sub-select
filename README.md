@@ -173,31 +173,6 @@ but will disable the `force_prediction` and `detect_incorrect_predictions` optio
 The `whitelist` and `blacklist` will still only work with subs, but the `condition` filter
 can be used to implement audio-specific filtering behaviour.
 
-## Synchronous vs Asynchronous Track Selection
-
-The script has two different ways it can select subtitles, controlled with the `preload` script-opt. The default is to load synchronously during the preload phase, which is before track selection; this allows the script to seamlessly change the subtitles to the desired track without any indication that the tracks were switched manually. This likely has better compatability with other options and scripts.
-
-The downside of this method is that when `--aid` is set to auto the script needs to scan the track-list and predict what track mpv will select. Therefore, in some rare situations, this could result in the wrong audio track prediction, and hence the wrong subtitle being selected. There are several solutions to this problem:
-
-### Use Asynchronous Mode (default no)
-
-Disable the hook by setting `preload=no`. This is the simplest and most efficient solution, however it means that track switching messages will be printed to the console and it may break other scripts that use subtitle information.
-
-### Force Prediction (default no)
-
-Force the predicted track to be correct by setting `aid` to the predicted value. This can be enabled with `force_prediction=yes`.
-This method works well, but is not ideal if one wants to utilise a more refined audio track selector, or if mpv's default is more desirable.
-
-### Detect Incorrect Predictions (default yes)
-
-Check the audio track when playback starts and compare with the latest prediction, if the prediction was wrong then the subtitle selection is run again. This can be disabled with `detect_incorrect_predictions=no`. This is the best of both worlds, since 99% of the time the subtitles will load seamlessly, and on the rare occasion that the file has weird track tagging the correct subtitles will be reloaded. However, this method does have the highest computational overhead, if anyone cares about that.
-
-Auto-Select Mode enables this intrinsically.
-
-### Use audio selection mode (default no)
-
-See [Audio Selection](#audio-selection).
-
 ## Examples
 
 The [sub_select.conf](/sub_select.conf) file contains all of the options for the script and their defaults.
